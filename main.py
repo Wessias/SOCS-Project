@@ -58,11 +58,11 @@ def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
 def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
     df = desire_force([0, -50], 1, position, v, 1)
     sf = social_force(position, particle_radius, 1, 1)
-    gf = granular_force()
-    wf = wall_force()
-    gwf = granular_wall_force()
+    gf = granular_force(position, v, particle_radius, 1, 1)
+    wf = wall_social_force(position, particle_radius, L, 1, 1)
+    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1)
 
-    v = v + (df + sf) # + gf + wf + gwf)*delta_t
+    v = v + (df + sf + gf + wf + gwf)*delta_t
 
     return v
 
@@ -121,7 +121,7 @@ def desire_force(target_position, speed_desire, position, v, relaxation_time):
 
     return  f_desire
 
-def social_force(position, particle_radius, A, B):
+def social_force(position, particle_radius, A, B): # should look over if correct
     N = position.shape[0]
     
     f_social = np.zeros((N, 2))
@@ -129,11 +129,11 @@ def social_force(position, particle_radius, A, B):
         distance = position - position[i]
         force_norm = np.linalg.norm(distance, axis=1)
 
-        nn = (force_norm < particle_radius) & (force_norm > 0)
+        nn = (force_norm > 0) # & (force_norm < particle_radius)
 
         force_direction = distance[nn] / force_norm[nn][:, None]
 
-        force_size = A * np.exp((force_norm[nn] - particle_radius) / B)
+        force_size = -A * np.exp((2*particle_radius - force_norm[nn]) / B)
 
         nn_forces = (force_size[:, None] * force_direction)
 
@@ -141,14 +141,59 @@ def social_force(position, particle_radius, A, B):
         
     return f_social
 
-def granular_force():
-    return
+def granular_force(position, v, particle_radius, k, kappa):
+    N = position.shape[0]
 
-def wall_force():
-    return
+    f_granular = np.zeros((N, 2))
+    for i in range(N):
+        distance = position - position[i]
+        force_norm = np.linalg.norm(distance, axis=1)
+        
+        nn = (force_norm > 0) & (force_norm < 2 * particle_radius)
 
-def granular_wall_force():
-    return
+        kompressive_force_magnitude = k * (2 * particle_radius - force_norm[nn])
+        force_direction = distance[nn] / force_norm[nn][:, None]
+        kompressive_force = kompressive_force_magnitude[:, None] * force_direction
+
+        friction_force_magnitude = kappa * np.sum((v[nn] - v[i]), axis=1)
+        orthogonal_direction = np.array([force_direction[:, 1], -force_direction[:, 0]]).T
+        friction_force = friction_force_magnitude[:, None] * orthogonal_direction
+
+        nn_forces = kompressive_force + friction_force
+
+        f_granular[i] = np.sum(nn_forces, axis=0)
+
+    return f_granular
+
+def wall_social_force(position, particle_radius, L, A, B):
+    N = position.shape[0]
+    
+    f_social_wall = np.zeros((N, 2))
+    for i in range(N):
+        distance_to_wall = L/2 - np.abs(position[i])
+        
+        force_magnitude = A * np.exp((particle_radius - distance_to_wall) / B)
+        direction = -np.sign(position[i])
+        
+        f_social_wall[i] = force_magnitude * direction
+
+    return f_social_wall
+
+def granular_wall_force(position, v, particle_radius, L, k, kappa):
+    distance_to_wall = L/2 - np.abs(position)
+
+    kompressive_force_magnitude = k * (particle_radius - distance_to_wall)
+    direction = -np.sign(position)
+
+    kompressive_force = kompressive_force_magnitude * direction
+
+    friction_force_magnitude = kappa * np.sum(v, axis=1)
+    orthogonal_direction = - np.array([direction[:, 1], -direction[:, 0]]).T
+    friction_force = friction_force_magnitude[:, None] * orthogonal_direction
+
+    f_granular_wall = (kompressive_force + friction_force) if np.any(distance_to_wall < particle_radius) else 0
+
+    return f_granular_wall
 
 def update_v(position, v, particle_vision, board_size, particle_radius, eta, delta_t):
     # m = 1
@@ -189,7 +234,7 @@ n_particles = 100
 particle_size = 1
 board_size = 100 * particle_size
 particle_vision = 10
-n_itterations = 5000
+n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
 
