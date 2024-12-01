@@ -258,8 +258,8 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
 # do we want to use the vicsek particle speed?
 
 n_particles = 100
-particle_size = 1 # [m]
-board_size = 100 * particle_size # [m]
+particle_size = 0.4 # [m]
+board_size = 100  # [m]
 particle_vision = 1 # [m]
 n_itterations = 1000
 eta = 0.1
