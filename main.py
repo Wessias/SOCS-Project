@@ -206,6 +206,9 @@ def update_v(position, v, particle_vision, board_size, particle_radius, eta, del
     return v_combined
 
 # %%
+from IPython.display import display, clear_output
+from matplotlib import pyplot as plt
+
 
 def init_particles(N, L, v_max=1):
     v = (np.random.rand(N, 2) - 0.5) * v_max
@@ -214,18 +217,28 @@ def init_particles(N, L, v_max=1):
     return position, v
 
 def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
-    position, v = init_particles(n_particles, board_size)
-    plt.scatter(position[:, 0], position[:, 1], label='Initial position')
-    plt.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
+    positions, v = init_particles(n_particles, board_size)
+    #plt.scatter(position[:, 0], position[:, 1], label='Initial position')
+    #plt.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
+
+    fig, ax = plt.subplots(figsize=(10, 10))
 
     for i in range(n_itterations):
-        if i % 1000 == 0:
-            print(f'current itteration: {i}')
-        v = update_v(position, v, particle_vision, board_size, particle_size, eta, delta_t)
-        position = position + v * delta_t
-        reflecting_boundary_conditions(position, board_size)
+        if i % 1 == 0:
+            ax.clear()
+            ax.plot(positions[:,0], positions[:,1], '.', markersize=16)
+            ax.quiver(positions[:,0], positions[:,1],v[:, 0], v[:, 1])
+            ax.set_xlim([-board_size / 2, board_size / 2])
+            ax.set_ylim([-board_size / 2, board_size / 2])
+            ax.set_title(f'time {i * delta_t:.2f}')
+            display(fig)
+            clear_output(wait=True)
 
-    return position, v
+        v = update_v(positions, v, particle_vision, board_size, particle_size, eta, delta_t)
+        positions = positions + v * delta_t
+        reflecting_boundary_conditions(positions, board_size)
+
+    return positions, v
     
 
 # do we want to use the vicsek particle speed?
@@ -240,14 +253,15 @@ delta_t = 0.1
 
 positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
 
-plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
-plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
-plt.xlim(-board_size/2, board_size/2)
-plt.ylim(-board_size/2, board_size/2)
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Particle simulation')
-plt.show()
+#plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
+#plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
+#plt.xlim(-board_size/2, board_size/2)
+#plt.ylim(-board_size/2, board_size/2)
+#plt.xlabel('x')
+#plt.ylabel('y')
+#plt.legend()
+#plt.title('Particle simulation')
+#plt.show()
 
 
 
