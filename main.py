@@ -63,6 +63,7 @@ def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t, A, B, 
     gwf = granular_wall_force(position, v, particle_radius, L, k, kappa)
 
     v = v + (1/m)*(df + sf + gf + wf + gwf)*delta_t
+    #gwf verkar vara problemet?
 
     return v
 
