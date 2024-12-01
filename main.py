@@ -55,14 +55,14 @@ def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
           
     return v
 
-def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
-    df = desire_force([0, -50], 1, position, v, 1)
-    sf = social_force(position, particle_radius, 1, 1)
-    gf = granular_force(position, v, particle_radius, 1, 1)
-    wf = wall_social_force(position, particle_radius, L, 1, 1)
-    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1)
+def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t, A, B, k, kappa, m):
+    df = desire_force([50, 0], 1, position, v, 0.5, m)
+    sf = social_force(position, particle_radius, A, B)
+    gf = granular_force(position, v, particle_radius, k, kappa)
+    wf = wall_social_force(position, particle_radius, L, A, B)
+    gwf = granular_wall_force(position, v, particle_radius, L, k, kappa)
 
-    v = v + (df + sf + gf + wf + gwf)*delta_t
+    v = v + (1/m)*(df + sf + gf + wf + gwf)*delta_t
 
     return v
 
@@ -84,40 +84,45 @@ def list_neighbours(x, y, N_particles, cutoff_radius):
 # %% Kod vi kan anpassa om vi vill använda reflekterande väggar 
 # Reflecting boundary conditions.
 
-def reflecting_boundary_conditions(positions, L):
-    positions[positions < -L/2] = L + positions[positions < -L/2]
-    positions[positions > L/2] = L - positions[positions > L/2]
+def reflecting_boundary_conditions(positions, velocities, L):
+    #positions[positions < -L/2] = L + positions[positions < -L/2]
+    #positions[positions > L/2] = L - positions[positions > L/2]
 
     # if we want to use some other dimension
     # x[x < L/2] = L - x[x < L/2]
     # x[x > L/2] = L - x[x > L/2]
     # y[y < L/2] = L - y[y < L/2]
     # y[y > L/2] = L - y[y > L/2]
+    N = positions.shape[0]
+    x = positions[:, 0]
+    y = positions[:, 1]
+    vx = velocities[:, 0]
+    vy = velocities[:,1]
 
-    # for j in range(N_particles):
-    #     if nx[j] < x_min:
-    #         nx[j] = x_min + (x_min - nx[j])
-    #         nvx[j] = - nvx[j]
+    for j in range(N):
+        if x[j] < -L/2:
+            x[j] = -L/2 + (-L/2 - x[j])
+            vx[j] = - vx[j]
 
-    #     if nx[j] > x_max:
-    #         nx[j] = x_max - (nx[j] - x_max)
-    #         nvx[j] = - nvx[j]
+        if x[j] > L/2:
+            x[j] = L/2 - (x[j] - L/2)
+            vx[j] = - vx[j]
 
-    #     if ny[j] < y_min:
-    #         ny[j] = y_min + (y_min - ny[j])
-    #         nvy[j] = - nvy[j]
+        if y[j] < -L/2:
+            y[j] = -L/2 + (-L/2 - y[j])
+            vy[j] = - vy[j]
                 
-    #     if ny[j] > y_max:
-    #         ny[j] = y_max - (ny[j] - y_max)
-    #         nvy[j] = - nvy[j]
+        if y[j] > L/2:
+            y[j] = L/2 - (y[j] - L/2)
+            vy[j] = - vy[j]
 
 # %% Funktioner vi vill implementera?
 
-def desire_force(target_position, speed_desire, position, v, relaxation_time):
+def desire_force(target_position, speed_desire, position, v, relaxation_time, m):
     direction = target_position - position
     direction = direction / np.linalg.norm(direction)
     v_desire = direction * speed_desire# * np.linalg.norm(v)
-    f_desire = (v_desire - v) / relaxation_time
+    f_desire = m*(v_desire - v) / relaxation_time
 
     return  f_desire
 
@@ -195,19 +200,20 @@ def granular_wall_force(position, v, particle_radius, L, k, kappa):
 
     return f_granular_wall
 
-def update_v(position, v, particle_vision, board_size, particle_radius, eta, delta_t):
+def update_v(position, v, particle_vision, board_size, particle_radius, eta, delta_t, A, B, k, kappa, m):
     # m = 1
 
     v_vicsek_model = next_v_vecsek_model(position, v, particle_vision, board_size, eta, delta_t)
-    v_force_model = next_v_force_model(position, v, particle_radius, board_size, eta, particle_size, delta_t)
+    v_force_model = next_v_force_model(position, v, particle_radius, board_size, eta, particle_size, delta_t, A, B, k, kappa, m)
 
-    v_combined = (v_vicsek_model + v_force_model) / np.linalg.norm(v_vicsek_model + v_force_model)
+    v_combined = 10*(v_vicsek_model + v_force_model) / np.linalg.norm(v_vicsek_model + v_force_model)
 
     return v_combined
 
 # %%
 from IPython.display import display, clear_output
 from matplotlib import pyplot as plt
+import time
 
 
 def init_particles(N, L, v_max=1):
@@ -216,7 +222,7 @@ def init_particles(N, L, v_max=1):
 
     return position, v
 
-def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
+def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t, A, B, k, kappa, m):
     positions, v = init_particles(n_particles, board_size)
     #plt.scatter(position[:, 0], position[:, 1], label='Initial position')
     #plt.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
@@ -224,19 +230,23 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
     fig, ax = plt.subplots(figsize=(10, 10))
 
     for i in range(n_itterations):
+        if i < 10:
+            time.sleep(1.5)
         if i % 1 == 0:
             ax.clear()
             ax.plot(positions[:,0], positions[:,1], '.', markersize=16)
             ax.quiver(positions[:,0], positions[:,1],v[:, 0], v[:, 1])
-            ax.set_xlim([-board_size / 2, board_size / 2])
-            ax.set_ylim([-board_size / 2, board_size / 2])
+            ax.plot([50, 50, -50, -50, 50],
+                     [50, -50, -50, 50, 50  ])
+            ax.set_xlim([-board_size / 2 - 10, board_size / 2 + 10])
+            ax.set_ylim([-board_size / 2 - 10, board_size / 2 + 10])
             ax.set_title(f'time {i * delta_t:.2f}')
             display(fig)
             clear_output(wait=True)
 
-        v = update_v(positions, v, particle_vision, board_size, particle_size, eta, delta_t)
+        v = update_v(positions, v, particle_vision, board_size, particle_size, eta, delta_t, A, B, k, kappa, m)
         positions = positions + v * delta_t
-        reflecting_boundary_conditions(positions, board_size)
+        reflecting_boundary_conditions(positions, v, board_size)
 
     return positions, v
     
@@ -244,14 +254,20 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
 # do we want to use the vicsek particle speed?
 
 n_particles = 100
-particle_size = 1
-board_size = 100 * particle_size
-particle_vision = 10
+particle_size = 1 # [m]
+board_size = 100 * particle_size # [m]
+particle_vision = 1 # [m]
 n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
+kappa = 2.4e5 # [kg/(ms)]
+A = 2000 # [N]
+B = 0.08 # [m]
+k = 1.2e5 # [kg/s^2]
+m = 60 # [kg]
+relaxation_time = 0.5 # [s]
 
-positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
+positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t, A, B, k, kappa, m)
 
 #plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
 #plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
