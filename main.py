@@ -238,7 +238,10 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
             ax.plot(positions[:,0], positions[:,1], '.', markersize=16)
             ax.quiver(positions[:,0], positions[:,1],v[:, 0], v[:, 1])
             ax.plot([50, 50, -50, -50, 50],
-                     [50, -50, -50, 50, 50  ])
+                     [50, -50, -50, 50, 50  ], "green")
+            plt.plot(50 + 5 * np.cos(np.linspace(np.pi/2, 3*np.pi /2)), 
+            5 * np.sin(np.linspace(np.pi/2, 3*np.pi /2)), 
+         '-', color='#FFA0FF', linewidth=3 )
             ax.set_xlim([-board_size / 2 - 10, board_size / 2 + 10])
             ax.set_ylim([-board_size / 2 - 10, board_size / 2 + 10])
             ax.set_title(f'time {i * delta_t:.2f}')
