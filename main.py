@@ -11,6 +11,7 @@
 # %% Interaction function for Vicsek model
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
     """
@@ -215,8 +216,6 @@ def init_particles(N, L, v_max=1):
 
 def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
     position, v = init_particles(n_particles, board_size)
-    plt.scatter(position[:, 0], position[:, 1], label='Initial position')
-    plt.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
 
     for i in range(n_itterations):
         if i % 1000 == 0:
@@ -226,9 +225,36 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         reflecting_boundary_conditions(position, board_size)
 
     return position, v
-    
 
-# do we want to use the vicsek particle speed?
+def run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
+    position, v = init_particles(n_particles, board_size)
+
+    fig, ax = plt.subplots()
+    scatter = ax.scatter(position[:, 0], position[:, 1], label='Particles')
+    quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
+    ax.set_xlim(-board_size/2, board_size/2)
+    ax.set_ylim(-board_size/2, board_size/2)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_title('Particle simulation')
+    ax.legend()
+
+    def update_frame(frame):
+        nonlocal position, v, scatter, quiver
+        v = update_v(position, v, particle_vision, board_size, particle_size, eta, delta_t)
+        position = position + v * delta_t
+        reflecting_boundary_conditions(position, board_size)
+
+        if frame % 10 == 0: # Update plot every 10 frames
+            scatter.set_offsets(position)
+            quiver.set_offsets(position)
+            quiver.set_UVC(v[:, 0], v[:, 1])
+            ax.set_title(f'Particle simulation, frame: {frame}')
+        return scatter, quiver
+
+    ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
+    plt.show()
+
 
 n_particles = 100
 particle_size = 1
@@ -238,15 +264,12 @@ n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
 
+run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
+
 positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
 
 plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
 plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
-plt.xlim(-board_size/2, board_size/2)
-plt.ylim(-board_size/2, board_size/2)
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Particle simulation')
 plt.show()
 
 
