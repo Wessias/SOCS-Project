@@ -6,10 +6,21 @@
 # SFM använder sig av en "desire force" + "social force" (agents vill inte vara för nära varandra) + "wall force" (inte gå in i väg) 
 # och Vicsek ger oss att agents vill matcha individer i närheten //Viggo
 
+
+# # Nice get commands to know
+# git pull
+
+# git add .
+# git commit -m "message"
+# git push
+
+# git reset --hard HEAD~
+
 # %% [markdown]
 # # Left to do
 # ## Priority High
 # - Remove particles when they reach the door
+# - Global parameters for scalars used in multiple places
 # - Remove the wall where the door is
 # - Ability to use more doors
 # - Variable door vision
