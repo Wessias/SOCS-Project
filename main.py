@@ -6,12 +6,28 @@
 # SFM använder sig av en "desire force" + "social force" (agents vill inte vara för nära varandra) + "wall force" (inte gå in i väg) 
 # och Vicsek ger oss att agents vill matcha individer i närheten //Viggo
 
+# %% [markdown]
+# # Left to do
+# ## Priority High
+# - Remove particles when they reach the door
+# - Remove the wall where the door is
+# - Ability to use more doors
+# - Variable door vision
+# ## Priority Low
+# - line or similar target (door) to go towards
+
 
 # Pastear in lite kod snuttar som jag tror kan vara användbara för oss
 # %% Interaction function for Vicsek model
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
+class door:
+    def __init__(self, position, size, vision):
+        self.position = position
+        self.vision = vision
+        self.size = size
 
 def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
     """
@@ -58,7 +74,6 @@ def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
 
 # reflection on boundry shouldn't be needed due to forces by the walls
 def reflecting_boundary_conditions(positions, L):
-    # add posibility to go toward a line (2, 2) array, use the shortest distance
     mask_lower = positions < -L/2
     mask_upper = positions > L/2
 
@@ -67,6 +82,8 @@ def reflecting_boundary_conditions(positions, L):
 
 
 def desire_force(target_position, speed_desire, position, v, relaxation_time, vision_radius):
+    # add posibility to go toward a line (2, 2) array, use the shortest distance
+
     direction = target_position - position
     direction = direction / np.linalg.norm(direction)
     v_desire = direction * speed_desire# * np.linalg.norm(v)
@@ -203,12 +220,14 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     fig, ax = plt.subplots()
     scatter = ax.scatter(position[:, 0], position[:, 1], label='Particles')
     quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
-    ax.set_xlim(-board_size/2, board_size/2)
-    ax.set_ylim(-board_size/2, board_size/2)
+    ax.set_xlim(-board_size/2-5, board_size/2+5)
+    ax.set_ylim(-board_size/2-5, board_size/2+5)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_title('Particle simulation')
     ax.legend()
+    plt.plot([-board_size/2, -board_size/2, board_size/2, board_size/2, -board_size/2], [-board_size/2, board_size/2, board_size/2, -board_size/2, -board_size/2], color='red', label='Wall')
+
 
     def update_frame(frame):
         nonlocal position, v, scatter, quiver
@@ -229,7 +248,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 n_particles = 100
 particle_size = 1
 board_size = 100 * particle_size
-particle_vision = 5 * particle_size
+particle_vision = 40 * particle_size
 n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
