@@ -66,11 +66,12 @@ def reflecting_boundary_conditions(positions, L):
     positions[mask_upper] = L/2 - (positions[mask_upper] - L/2)
 
 
-def desire_force(target_position, speed_desire, position, v, relaxation_time):
+def desire_force(target_position, speed_desire, position, v, relaxation_time, vision_radius):
     direction = target_position - position
     direction = direction / np.linalg.norm(direction)
     v_desire = direction * speed_desire# * np.linalg.norm(v)
     f_desire = (v_desire - v) / relaxation_time
+    f_desire[(np.linalg.norm(target_position - position, axis=1) > vision_radius)] = 0
 
     return  f_desire
 
@@ -153,13 +154,13 @@ def granular_wall_force(position, v, particle_radius, L, k, kappa):
 def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
     # m = 1, delta_t = 1
     # must fineturn the parameters
-    df = desire_force([0, -50], 1, position, v, 1)
+    df = desire_force([0, -50], 1, position, v, 1, particle_vision)
     sf = social_force(position, particle_radius, 1, 1)
     gf = granular_force(position, v, particle_radius, 1, 1)
     wf = wall_social_force(position, particle_radius, L, 1, 1)
     gwf = granular_wall_force(position, v, particle_radius, L, 1, 1) # something wack is happening
 
-    v = v + (df + sf + gf + wf) * delta_t # + gwf
+    v = v + df + sf + gf + wf # + gwf
 
     return v
 
@@ -228,7 +229,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 n_particles = 100
 particle_size = 1
 board_size = 100 * particle_size
-particle_vision = 10
+particle_vision = 5 * particle_size
 n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
@@ -249,4 +250,5 @@ plt.show()
  # %% [markdown]
 # (SFM model) velocity(t+dt) = velocity(t) + (1/m)(desire_force + social_force + granular_force + wall_force + granular_wall_force) 
 # $$ v^{\textbf{SFM}}(t + \Delta t) = \frac{1}{m}( \bm{F_{D} + F_{S} + F_{G} + F_{W} + F_{GW}})$$
+
 # %%
