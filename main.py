@@ -58,8 +58,12 @@ def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
 
 # reflection on boundry shouldn't be needed due to forces by the walls
 def reflecting_boundary_conditions(positions, L):
-    positions[positions < -L/2] = L + positions[positions < -L/2]
-    positions[positions > L/2] = L - positions[positions > L/2]
+    # add posibility to go toward a line (2, 2) array, use the shortest distance
+    mask_lower = positions < -L/2
+    mask_upper = positions > L/2
+
+    positions[mask_lower] = -L/2 + (-L/2 - positions[mask_lower])
+    positions[mask_upper] = L/2 - (positions[mask_upper] - L/2)
 
 
 def desire_force(target_position, speed_desire, position, v, relaxation_time):
@@ -115,6 +119,7 @@ def granular_force(position, v, particle_radius, k, kappa):
     return f_granular
 
 def wall_social_force(position, particle_radius, L, A, B):
+    # if the door is on the border, the wall force shouldn't exist
     N = position.shape[0]
     
     f_social_wall = np.zeros((N, 2))
@@ -129,6 +134,7 @@ def wall_social_force(position, particle_radius, L, A, B):
     return f_social_wall
 
 def granular_wall_force(position, v, particle_radius, L, k, kappa):
+    # doesn't work as intended
     distance_to_wall = L/2 - np.abs(position)
 
     kompressive_force_magnitude = k * (particle_radius - distance_to_wall)
@@ -145,13 +151,15 @@ def granular_wall_force(position, v, particle_radius, L, k, kappa):
     return f_granular_wall
 
 def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
+    # m = 1, delta_t = 1
+    # must fineturn the parameters
     df = desire_force([0, -50], 1, position, v, 1)
     sf = social_force(position, particle_radius, 1, 1)
     gf = granular_force(position, v, particle_radius, 1, 1)
     wf = wall_social_force(position, particle_radius, L, 1, 1)
-    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1)
+    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1) # something wack is happening
 
-    v = v + (df + sf + gf + wf + gwf)*delta_t
+    v = v + df + sf + gf + wf# + gwf
 
     return v
 
@@ -174,6 +182,7 @@ def init_particles(N, L, v_max=1):
     return position, v
 
 def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
+    # if particles tuch the door, they should be removed
     position, v = init_particles(n_particles, board_size)
 
     for i in range(n_itterations):
@@ -181,7 +190,7 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
             print(f'current itteration: {i}')
         v = update_v(position, v, particle_vision, board_size, particle_size, eta, delta_t)
         position = position + v * delta_t
-        reflecting_boundary_conditions(position, board_size)
+        # reflecting_boundary_conditions(position, board_size)
 
     return position, v
 
@@ -204,7 +213,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         nonlocal position, v, scatter, quiver
         v = update_v(position, v, particle_vision, board_size, particle_size, eta, delta_t)
         position = position + v * delta_t
-        reflecting_boundary_conditions(position, board_size)
+        # reflecting_boundary_conditions(position, board_size)
 
         if frame % 10 == 0: # Update plot every 10 frames
             scatter.set_offsets(position)
@@ -223,6 +232,7 @@ particle_vision = 10
 n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
+door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
 # %% Simulation animation, need to run entire script to see animation
 run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
