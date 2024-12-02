@@ -19,11 +19,11 @@
 # %% [markdown]
 # # Left to do
 # ## Priority High
-# - Remove particles when they reach the door - Viggo
-# - Global parameters for scalars used in multiple places
-# - Remove the wall where the door is - Viggo
-# - Ability to use more doors 
-# - Variable door vision - Viggo
+# - Remove particles when they reach the door - Klar
+# - Global parameters for scalars used in multiple places - Klar
+# - Remove the wall where the door is 
+# - Ability to use more doors - Klar
+# - Variable door vision - Klar
 # ## Priority Low
 # - line or similar target (door) to go towards
 
