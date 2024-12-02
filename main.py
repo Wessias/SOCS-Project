@@ -56,63 +56,11 @@ def next_v_vecsek_model(position, v, Rf, L, eta, delta_t):
           
     return v
 
-def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
-    df = desire_force([0, -50], 1, position, v, 1)
-    sf = social_force(position, particle_radius, 1, 1)
-    gf = granular_force(position, v, particle_radius, 1, 1)
-    wf = wall_social_force(position, particle_radius, L, 1, 1)
-    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1)
-
-    v = v + (df + sf + gf + wf + gwf)*delta_t
-
-    return v
-
-
-# %% Find neighbours function
-
-def list_neighbours(x, y, N_particles, cutoff_radius):
-    '''Prepare a neigbours list for each particle.'''
-    neighbours = []
-    neighbour_number = []
-    for j in range(N_particles):
-        distances = np.sqrt((x - x[j]) ** 2 + (y - y[j]) ** 2)
-        neighbor_indices = np.where(distances <= cutoff_radius)
-        neighbours.append(neighbor_indices)
-        neighbour_number.append(len(neighbor_indices))
-    return neighbours, neighbour_number
-
-
-# %% Kod vi kan anpassa om vi vill använda reflekterande väggar 
-# Reflecting boundary conditions.
-
+# reflection on boundry shouldn't be needed due to forces by the walls
 def reflecting_boundary_conditions(positions, L):
     positions[positions < -L/2] = L + positions[positions < -L/2]
     positions[positions > L/2] = L - positions[positions > L/2]
 
-    # if we want to use some other dimension
-    # x[x < L/2] = L - x[x < L/2]
-    # x[x > L/2] = L - x[x > L/2]
-    # y[y < L/2] = L - y[y < L/2]
-    # y[y > L/2] = L - y[y > L/2]
-
-    # for j in range(N_particles):
-    #     if nx[j] < x_min:
-    #         nx[j] = x_min + (x_min - nx[j])
-    #         nvx[j] = - nvx[j]
-
-    #     if nx[j] > x_max:
-    #         nx[j] = x_max - (nx[j] - x_max)
-    #         nvx[j] = - nvx[j]
-
-    #     if ny[j] < y_min:
-    #         ny[j] = y_min + (y_min - ny[j])
-    #         nvy[j] = - nvy[j]
-                
-    #     if ny[j] > y_max:
-    #         ny[j] = y_max - (ny[j] - y_max)
-    #         nvy[j] = - nvy[j]
-
-# %% Funktioner vi vill implementera?
 
 def desire_force(target_position, speed_desire, position, v, relaxation_time):
     direction = target_position - position
@@ -196,6 +144,17 @@ def granular_wall_force(position, v, particle_radius, L, k, kappa):
 
     return f_granular_wall
 
+def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
+    df = desire_force([0, -50], 1, position, v, 1)
+    sf = social_force(position, particle_radius, 1, 1)
+    gf = granular_force(position, v, particle_radius, 1, 1)
+    wf = wall_social_force(position, particle_radius, L, 1, 1)
+    gwf = granular_wall_force(position, v, particle_radius, L, 1, 1)
+
+    v = v + (df + sf + gf + wf + gwf)*delta_t
+
+    return v
+
 def update_v(position, v, particle_vision, board_size, particle_radius, eta, delta_t):
     # m = 1
 
@@ -206,7 +165,7 @@ def update_v(position, v, particle_vision, board_size, particle_radius, eta, del
 
     return v_combined
 
-# %%
+# %% Particle simulation
 
 def init_particles(N, L, v_max=1):
     v = (np.random.rand(N, 2) - 0.5) * v_max
@@ -225,6 +184,8 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         reflecting_boundary_conditions(position, board_size)
 
     return position, v
+
+# %% Simulation animation
 
 def run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t):
     position, v = init_particles(n_particles, board_size)
@@ -254,8 +215,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 
     ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
     plt.show()
-
-
+# %% Simulation parameters
 n_particles = 100
 particle_size = 1
 board_size = 100 * particle_size
@@ -264,8 +224,10 @@ n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
 
+# %% Simulation animation, need to run entire script to see animation
 run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
 
+# %% Simulation plot
 positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
 
 plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
