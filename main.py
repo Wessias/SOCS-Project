@@ -46,10 +46,11 @@ relaxation_time = 0.5 # [s]
 v0 = 3.5 # [m/s] achieveable speed by most Taylor Swift fans in a high-octane situation
 
 class door:
-    def __init__(self, position, size, vision):
+    def __init__(self, position, size, vision, orientation):
         self.position = position
         self.vision = vision
         self.size = size
+        self.orientation = orientation # "horizontal" or "vertical"
 
 def next_v_vecsek_model(position, v, Rf, L, delta_t):
     """
@@ -133,6 +134,7 @@ def desire_force(doors, speed_desire, position, v, relaxation_time):
     return  f_desire
 
 def social_force(position, particle_radius, A, B):
+    #Maybe only calculate for neighbours?
     N = position.shape[0]
     
     f_social = np.zeros((N, 2))
@@ -144,7 +146,7 @@ def social_force(position, particle_radius, A, B):
 
         force_direction = distance[nn] / force_norm[nn][:, None]
 
-        force_size = -A * np.exp((2*particle_radius - force_norm[nn]) / B)
+        force_size = -A * np.exp((2*particle_radius[i] - force_norm[nn]) / B)
 
         nn_forces = (force_size[:, None] * force_direction)
 
@@ -160,9 +162,9 @@ def granular_force(position, v, particle_radius, k, kappa):
         distance = position - position[i]
         force_norm = np.linalg.norm(distance, axis=1)
         
-        nn = (force_norm > 0) & (force_norm < 2 * particle_radius)
+        nn = (force_norm > 0) & (force_norm < 2 * particle_radius[i])
 
-        kompressive_force_magnitude = k * (2 * particle_radius - force_norm[nn])
+        kompressive_force_magnitude = k * (2 * particle_radius[i] - force_norm[nn])
         force_direction = distance[nn] / force_norm[nn][:, None]
         kompressive_force = kompressive_force_magnitude[:, None] * force_direction
 
@@ -184,18 +186,21 @@ def wall_social_force(position, particle_radius, L, A, B):
     for i in range(N):
         distance_to_wall = L/2 - np.abs(position[i])
         
-        force_magnitude = A * np.exp((particle_radius - distance_to_wall) / B)
+        force_magnitude = A * np.exp((particle_radius[i] - distance_to_wall) / B)
         direction = -np.sign(position[i])
         
         f_social_wall[i] = force_magnitude * direction
 
     return f_social_wall
 
+
 def granular_wall_force(position, v, particle_radius, L, k):
     # doesn't work as intended
+    max_radius = max(particle_radius)
+
     distance_to_wall = L/2 - np.abs(position)
 
-    kompressive_force_magnitude = k * (particle_radius - distance_to_wall)
+    kompressive_force_magnitude = k * (max_radius - distance_to_wall)
     direction = -np.sign(position)
 
     kompressive_force = kompressive_force_magnitude * direction
@@ -204,7 +209,7 @@ def granular_wall_force(position, v, particle_radius, L, k):
     orthogonal_direction = - np.array([direction[:, 1], -direction[:, 0]]).T
     friction_force = friction_force_magnitude[:, None] * orthogonal_direction
 
-    f_granular_wall = (kompressive_force + friction_force) if np.any(distance_to_wall < particle_radius) else 0
+    f_granular_wall = (kompressive_force + friction_force) if np.any(distance_to_wall < max_radius) else 0
 
     return f_granular_wall
 
@@ -231,23 +236,90 @@ def update_v(position, v, particle_vision, board_size, particle_radius, delta_t,
 
     return v_combined
 
-# %% Particle simulation
+
+def index_of_particles_close_to_doors(doors, positions, particle_size):
+    # Check if particle is near a door (disable wall force in these regions)
+    N = positions.shape[0]
+    idx_of_close = []
+
+    for i in range(N):
+        is_near_door = False
+        for door in doors:
+            if door.orientation == 'horizontal':
+                # Horizontal door: span along x-axis
+                left_edge = door.position[0] - door.size / 2
+                right_edge = door.position[0] + door.size / 2
+
+                # Check if particle is horizontally within the door and close vertically
+                if left_edge <= positions[i, 0] <= right_edge and abs(positions[i, 1] - door.position[1]) <= 1.5*particle_size[i]:
+                    is_near_door = True
+                    break
+
+            elif door.orientation == 'vertical':
+                # Vertical door: span along y-axis
+                bottom_edge = door.position[1] - door.size / 2
+                top_edge = door.position[1] + door.size / 2
+
+                # Check if particle is vertically within the door and close horizontally
+                if bottom_edge <= positions[i, 1] <= top_edge and abs(positions[i, 0] - door.position[0]) <= 1.5*particle_size[i]:
+                    is_near_door = True
+                    break
+
+        if is_near_door:
+            idx_of_close.append(i)
+    return idx_of_close 
+    
+#    %% Particle simulation
 
 def init_particles(N, L, v_max=1):
     v = (np.random.rand(N, 2) - 0.5) * v_max
-    position = np.random.uniform(-L/2, L/2, (N, 2))
+    #position = np.random.uniform(-L/4, L/4, (N, 2))
 
-    return position, v
+    
+    positions = np.empty((0, 2))  # Initialize an empty array for positions
+
+    max_size = max(particle_size)
+    while positions.shape[0] < N:
+        # Generate a candidate position
+        candidate = np.random.uniform(-L / 4, L / 4, (1, 2))  # Shape (1, 2)
+
+        # Compute distances to all existing positions
+        if positions.shape[0] == 0 or np.all(np.linalg.norm(positions - candidate, axis=1) >= max_size + 1):
+            positions = np.vstack([positions, candidate])  # Add the candidate if it's valid
+    
+    
+    
+    #Just used this cause for a smaller arena it was chaos.
+    #x = np.linspace(-L/5, L/5, int(np.sqrt(N)))
+    #y = np.linspace(-L/10, L/10, int(np.sqrt(N)))
+
+    # Create a 2D grid of x and y values
+    #x_grid, y_grid = np.meshgrid(x, y)
+
+    # Combine the grid into an array of points
+    #position = np.vstack([x_grid.ravel(), y_grid.ravel()]).T
+
+    return positions, v
 
 def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors):
     # if particles tuch the door, they should be removed
     position, v = init_particles(n_particles, board_size)
 
     for i in range(n_itterations):
+        if len(position) == 0:
+            break
+
         if i % 1000 == 0:
             print(f'current itteration: {i}')
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
+        
+        particles_to_remove = index_of_particles_close_to_doors(doors, position, particle_size)
+
+        if len(particles_to_remove) != 0:
+            position = np.delete(position, particles_to_remove, axis=0)
+            v = np.delete(v, particles_to_remove, axis=0)
+        
         # reflecting_boundary_conditions(position, board_size)
 
     return position, v
@@ -258,7 +330,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     position, v = init_particles(n_particles, board_size)
 
     fig, ax = plt.subplots()
-    scatter = ax.scatter(position[:, 0], position[:, 1], label='Particles')
+    scatter = ax.scatter(position[:, 0], position[:, 1])
     quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
     ax.set_xlim(-board_size/2-5, board_size/2+5)
     ax.set_ylim(-board_size/2-5, board_size/2+5)
@@ -269,6 +341,12 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     plt.plot([-board_size/2, -board_size/2, board_size/2, board_size/2, -board_size/2],
      [-board_size/2, board_size/2, board_size/2, -board_size/2, -board_size/2], 
      color='red', label='Wall')
+    
+    for door in doors:
+        if door.orientation == "vertical":
+            plt.plot([door.position[0],door.position[0], door.position[0] ], [door.position[1], door.position[1]+door.size, door.position[1]-door.size], color="black")
+        else:
+            plt.plot([door.position[0],door.position[0]+door.size, door.position[0]-door.size ], [door.position[1], door.position[1], door.position[1]], color="black")
 
 
      # Draw vision circles for the doors
@@ -283,6 +361,11 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         nonlocal position, v, scatter, quiver
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
+        particles_to_remove = index_of_particles_close_to_doors(doors, position, particle_size)
+
+        if len(particles_to_remove) != 0:
+            position = np.delete(position, particles_to_remove, axis=0)
+            v = np.delete(v, particles_to_remove, axis=0)
         # reflecting_boundary_conditions(position, board_size)
 
         if frame % 1 == 0: # Update plot every 10 frames
@@ -292,10 +375,18 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
                 #It is mentioned in one of the papers we referenced that they experienced this too and used random radiuses of particles to introduce some randomness which 
                 #makes this less likely to happen.
                 time.sleep(3)
-            scatter.set_offsets(position)
-            quiver.set_offsets(position)
-            quiver.set_UVC(v[:, 0], v[:, 1])
-            ax.set_title(f'Particle simulation, frame: {frame} ({frame*delta_t:.2f} s)')
+            scatter.remove()
+            quiver.remove()
+            if len(position) == 0:
+                return scatter, quiver, *vision_circles
+
+            scatter = ax.scatter(position[:, 0], position[:, 1], color="gray")
+            quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue', scale=40)
+
+            ax.set_title(
+            f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
+            f'People remaining: {len(position)}'
+        )
         return scatter, quiver, *vision_circles
 
     ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
@@ -303,9 +394,10 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 # %% Simulation parameters, values from paper we used
 # The variables that are comments I have put as global up top for now.
 #n_particles = 100
-particle_size = 0.4 # [m] average shoulder width of a teenage girl in the range [13-18]
-board_size = 100  # [m]
-particle_vision = 5 # [m]
+#particle_size = 0.4 # [m] average shoulder width of a teenage girl in the range [13-18]
+particle_size = np.random.uniform(0.3,0.45, n_particles)
+board_size = 50  # [m]
+particle_vision = 3 # [m]
 n_itterations = 1000
 delta_t = 0.1
 #eta = 0.1
@@ -317,9 +409,12 @@ delta_t = 0.1
 #relaxation_time = 0.5 # [s]
 #v0 
 
-# (door_position, door_width, door_sight)
-doors = [door(np.array([50, 0]), 5, 30), door(np.array([-50, 0]), 5, 30)] #Two doors
-door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
+# (door_position, door_width, door_sight, door_orientation)
+doors = [door(np.array([board_size/2, 0]), 2, 15, "vertical"),
+        door(np.array([-board_size/2, 0]), 1, 15, "vertical"),
+        door(np.array([0,board_size/2]), 4, 10, "horizontal")
+ ] #Two doors
+#door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
 
 
@@ -329,9 +424,12 @@ run_simulation_animation(n_particles, particle_size, board_size, particle_vision
 # %% Simulation plot
 positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
-plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
-plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
-plt.show()
+if len(positions) != 0:
+    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
+    plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
+    plt.show()
+
+print(len(positions))
 
 
 
