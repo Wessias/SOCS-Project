@@ -9,10 +9,10 @@
 # %% [markdown]
 # # Left to do
 # ## Priority High
-# - Remove particles when they reach the door
-# - Remove the wall where the door is
-# - Ability to use more doors
-# - Variable door vision
+# - Remove particles when they reach the door - Viggo
+# - Remove the wall where the door is - Viggo
+# - Ability to use more doors 
+# - Variable door vision - Viggo
 # ## Priority Low
 # - line or similar target (door) to go towards
 
