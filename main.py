@@ -330,7 +330,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     position, v = init_particles(n_particles, board_size)
 
     fig, ax = plt.subplots()
-    scatter = ax.scatter(position[:, 0], position[:, 1])
+    scatter = ax.scatter(position[:, 0], position[:, 1], s=particle_size*100)
     quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
     ax.set_xlim(-board_size/2-5, board_size/2+5)
     ax.set_ylim(-board_size/2-5, board_size/2+5)
@@ -358,7 +358,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 
 
     def update_frame(frame):
-        nonlocal position, v, scatter, quiver
+        nonlocal position, v, scatter, quiver, particle_size
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
         particles_to_remove = index_of_particles_close_to_doors(doors, position, particle_size)
@@ -366,6 +366,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         if len(particles_to_remove) != 0:
             position = np.delete(position, particles_to_remove, axis=0)
             v = np.delete(v, particles_to_remove, axis=0)
+            particle_size = np.delete(particle_size, particles_to_remove)
         # reflecting_boundary_conditions(position, board_size)
 
         if frame % 1 == 0: # Update plot every 10 frames
@@ -380,7 +381,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
             if len(position) == 0:
                 return scatter, quiver, *vision_circles
 
-            scatter = ax.scatter(position[:, 0], position[:, 1], color="gray")
+            scatter = ax.scatter(position[:, 0], position[:, 1], color="gray", s=particle_size**2*500)
             quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue', scale=40)
 
             ax.set_title(
