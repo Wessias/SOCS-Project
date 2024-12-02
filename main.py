@@ -74,7 +74,7 @@ def desire_force(target_position, speed_desire, position, v, relaxation_time):
 
     return  f_desire
 
-def social_force(position, particle_radius, A, B): # should look over if correct
+def social_force(position, particle_radius, A, B):
     N = position.shape[0]
     
     f_social = np.zeros((N, 2))
@@ -159,7 +159,7 @@ def next_v_force_model(position, v, Rf, L, eta, particle_radius, delta_t):
     wf = wall_social_force(position, particle_radius, L, 1, 1)
     gwf = granular_wall_force(position, v, particle_radius, L, 1, 1) # something wack is happening
 
-    v = v + df + sf + gf + wf# + gwf
+    v = v + (df + sf + gf + wf) * delta_t # + gwf
 
     return v
 
