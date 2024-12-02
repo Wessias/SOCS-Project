@@ -33,9 +33,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import time
 
 eta = 0.1
 kappa = 2.4e5 # [kg/(ms)]
+n_particles = 100
+A = 2000 # [N]
+B = 0.08 # [m]
+k = 1.2e5 # [kg/s^2]
+m = 60 # [kg] average weight of a Taylor Swift fan (teenage girl in the range [13,18])
+relaxation_time = 0.5 # [s]
+v0 = 3.5 # [m/s] achieveable speed by most Taylor Swift fans in a high-octane situation
 
 class door:
     def __init__(self, position, size, vision):
@@ -81,8 +89,8 @@ def next_v_vecsek_model(position, v, Rf, L, delta_t):
 
         theta_next[j] = theta_avg + theta_delta
 
-    v[:, 0] = speed * np.cos(theta_next)
-    v[:, 1] = speed * np.sin(theta_next)
+    v[:, 0] = v0 * np.cos(theta_next)
+    v[:, 1] = v0 * np.sin(theta_next)
           
     return v
 
@@ -117,7 +125,7 @@ def desire_force(doors, speed_desire, position, v, relaxation_time):
             direction = nearest_door_position - position[i]
             direction = direction / np.linalg.norm(direction)
             v_desire = direction * speed_desire
-            f_desire[i] = (v_desire - v[i]) / relaxation_time
+            f_desire[i] = m * ((v_desire - v[i]) / relaxation_time)
         else:
             # Outside door's vision radius, no desire force
             f_desire[i] = 0
@@ -203,13 +211,13 @@ def granular_wall_force(position, v, particle_radius, L, k):
 def next_v_force_model(position, v, Rf, L, particle_radius, delta_t, doors):
     # m = 1, delta_t = 1
     # must fineturn the parameters
-    df = desire_force(doors, 1, position, v, 0.5)
-    sf = social_force(position, particle_radius, 1, 1)
-    gf = granular_force(position, v, particle_radius, 1, 1)
-    wf = wall_social_force(position, particle_radius, L, 1, 1)
-    gwf = granular_wall_force(position, v, particle_radius, L, 1) # something wack is happening
+    df = desire_force(doors, v0, position, v, relaxation_time)
+    sf = social_force(position, particle_radius, A, B)
+    gf = granular_force(position, v, particle_radius, k, kappa)
+    wf = wall_social_force(position, particle_radius, L, A, B)
+    gwf = granular_wall_force(position, v, particle_radius, L, k) # something wack is happening
 
-    v = v + df + sf + gf + wf # + gwf
+    v = v + (1/m) * (df + sf + gf + wf) * delta_t # + gwf
 
     return v
 
@@ -219,7 +227,7 @@ def update_v(position, v, particle_vision, board_size, particle_radius, delta_t,
     v_vicsek_model = next_v_vecsek_model(position, v, particle_vision, board_size, delta_t)
     v_force_model = next_v_force_model(position, v, particle_radius, board_size, particle_size, delta_t, doors)
 
-    v_combined = (v_vicsek_model + v_force_model) / np.linalg.norm(v_vicsek_model + v_force_model)
+    v_combined = v0 * (v_vicsek_model + v_force_model) / np.linalg.norm(v_vicsek_model + v_force_model)
 
     return v_combined
 
@@ -277,29 +285,39 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         position = position + v * delta_t
         # reflecting_boundary_conditions(position, board_size)
 
-        if frame % 10 == 0: # Update plot every 10 frames
+        if frame % 1 == 0: # Update plot every 10 frames
+            if frame == 1:
+                #Sometimes the simulation gets stuck in a deadlock.
+                #I think due to the fact that sometimes particles spawn too close together which messes with the forces for some reason
+                #It is mentioned in one of the papers we referenced that they experienced this too and used random radiuses of particles to introduce some randomness which 
+                #makes this less likely to happen.
+                time.sleep(3)
             scatter.set_offsets(position)
             quiver.set_offsets(position)
             quiver.set_UVC(v[:, 0], v[:, 1])
-            ax.set_title(f'Particle simulation, frame: {frame}')
+            ax.set_title(f'Particle simulation, frame: {frame} ({frame*delta_t:.2f} s)')
         return scatter, quiver, *vision_circles
 
     ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
     plt.show()
 # %% Simulation parameters, values from paper we used
-n_particles = 100
-particle_size = 0.4 # [m]
+# The variables that are comments I have put as global up top for now.
+#n_particles = 100
+particle_size = 0.4 # [m] average shoulder width of a teenage girl in the range [13-18]
 board_size = 100  # [m]
-particle_vision = 30 # [m]
+particle_vision = 5 # [m]
 n_itterations = 1000
 delta_t = 0.1
-A = 2000 # [N]
-B = 0.08 # [m]
-k = 1.2e5 # [kg/s^2]
-m = 60 # [kg]
-relaxation_time = 0.5 # [s]
+#eta = 0.1
+#kappa = 2.4e5 # [kg/(ms)]
+#A = 2000 # [N]
+#B = 0.08 # [m]
+#k = 1.2e5 # [kg/s^2]
+#m = 60 # [kg]
+#relaxation_time = 0.5 # [s]
+#v0 
 
-
+# (door_position, door_width, door_sight)
 doors = [door(np.array([50, 0]), 5, 30), door(np.array([-50, 0]), 5, 30)] #Two doors
 door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
