@@ -225,15 +225,23 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 
     ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
     plt.show()
-# %% Simulation parameters
+# %% Simulation parameters, values from paper we used
 n_particles = 100
-particle_size = 1
-board_size = 100 * particle_size
-particle_vision = 5 * particle_size
+particle_size = 0.4 # [m]
+board_size = 100  # [m]
+particle_vision = 5 * particle_size # [m]
 n_itterations = 1000
 eta = 0.1
 delta_t = 0.1
+kappa = 2.4e5 # [kg/(ms)]
+A = 2000 # [N]
+B = 0.08 # [m]
+k = 1.2e5 # [kg/s^2]
+m = 60 # [kg]
+relaxation_time = 0.5 # [s]
 door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
+
+
 
 # %% Simulation animation, need to run entire script to see animation
 run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, eta, delta_t)
