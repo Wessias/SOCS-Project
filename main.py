@@ -332,15 +332,17 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     fig, ax = plt.subplots()
     scatter = ax.scatter(position[:, 0], position[:, 1], s=particle_size*100)
     quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
-    ax.set_xlim(-board_size/2-5, board_size/2+5)
-    ax.set_ylim(-board_size/2-5, board_size/2+5)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+    ax.set_xlim(-board_size/2-0.1, board_size/2+0.1)
+    ax.set_ylim(-board_size/2-0.1, board_size/2+0.15)
+    fig.set_facecolor("#2B2E35")
+    ax.axis("off")
+    #ax.set_xlabel('x')
+    #ax.set_ylabel('y')
     ax.set_title('Particle simulation')
     ax.legend()
     plt.plot([-board_size/2, -board_size/2, board_size/2, board_size/2, -board_size/2],
      [-board_size/2, board_size/2, board_size/2, -board_size/2, -board_size/2], 
-     color='red', label='Wall')
+     color='#f8e1c2', label='Wall')
     
     for door in doors:
         if door.orientation == "vertical":
@@ -362,7 +364,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         if len(position) == 0:
             ax.set_title(
             f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
-            f'People remaining: {len(position)}'
+            f'People remaining: {len(position)}', color="white"
         )
             return
 
@@ -388,12 +390,12 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
             if len(position) == 0:
                 return scatter, quiver, *vision_circles
 
-            scatter = ax.scatter(position[:, 0], position[:, 1], color="gray", s=particle_size**2*500)
+            scatter = ax.scatter(position[:, 0], position[:, 1], color="#e83231", s=particle_size**2*500)
             quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue', scale=40)
 
             ax.set_title(
             f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
-            f'People remaining: {len(position)}'
+            f'People remaining: {len(position)}', color = "white"
         )
         return scatter, quiver, *vision_circles
 
