@@ -133,7 +133,7 @@ def desire_force(doors, speed_desire, position, v, relaxation_time):
 
     return  f_desire
 
-def social_force(position, particle_radius, A, B):
+def social_force(position, particle_size, A, B):
     #Maybe only calculate for neighbours?
     N = position.shape[0]
     
@@ -142,11 +142,11 @@ def social_force(position, particle_radius, A, B):
         distance = position - position[i]
         force_norm = np.linalg.norm(distance, axis=1)
 
-        nn = (force_norm > 0) # & (force_norm < particle_radius)
+        nn = (force_norm > 0) # & (force_norm < particle_size)
 
         force_direction = distance[nn] / force_norm[nn][:, None]
 
-        force_size = -A * np.exp((2*particle_radius[i] - force_norm[nn]) / B)
+        force_size = -A * np.exp((particle_size[i] - force_norm[nn]) / B)
 
         nn_forces = (force_size[:, None] * force_direction)
 
@@ -154,7 +154,7 @@ def social_force(position, particle_radius, A, B):
         
     return f_social
 
-def granular_force(position, v, particle_radius, k, kappa):
+def granular_force(position, v, particle_size, k, kappa):
     N = position.shape[0]
 
     f_granular = np.zeros((N, 2))
@@ -162,9 +162,9 @@ def granular_force(position, v, particle_radius, k, kappa):
         distance = position - position[i]
         force_norm = np.linalg.norm(distance, axis=1)
         
-        nn = (force_norm > 0) & (force_norm < 2 * particle_radius[i])
+        nn = (force_norm > 0) & (force_norm < particle_size[i])
 
-        kompressive_force_magnitude = k * (2 * particle_radius[i] - force_norm[nn])
+        kompressive_force_magnitude = k * (particle_size[i] - force_norm[nn])
         force_direction = distance[nn] / force_norm[nn][:, None]
         kompressive_force = kompressive_force_magnitude[:, None] * force_direction
 
@@ -178,7 +178,7 @@ def granular_force(position, v, particle_radius, k, kappa):
 
     return f_granular
 
-def wall_social_force(position, particle_radius, L, A, B):
+def wall_social_force(position, particle_size, L, A, B):
     # if the door is on the border, the wall force shouldn't exist
     N = position.shape[0]
     
@@ -186,7 +186,7 @@ def wall_social_force(position, particle_radius, L, A, B):
     for i in range(N):
         distance_to_wall = L/2 - np.abs(position[i])
         
-        force_magnitude = A * np.exp((particle_radius[i] - distance_to_wall) / B)
+        force_magnitude = A * np.exp((particle_size[i]/2 - distance_to_wall) / B)
         direction = -np.sign(position[i])
         
         f_social_wall[i] = force_magnitude * direction
@@ -194,9 +194,9 @@ def wall_social_force(position, particle_radius, L, A, B):
     return f_social_wall
 
 
-def granular_wall_force(position, v, particle_radius, L, k):
+def granular_wall_force(position, v, particle_size, L, k):
     # doesn't work as intended
-    max_radius = max(particle_radius)
+    max_radius = max(particle_size/2)
 
     distance_to_wall = L/2 - np.abs(position)
 
@@ -213,24 +213,24 @@ def granular_wall_force(position, v, particle_radius, L, k):
 
     return f_granular_wall
 
-def next_v_force_model(position, v, Rf, L, particle_radius, delta_t, doors):
+def next_v_force_model(position, v, Rf, L, particle_size, delta_t, doors):
     # m = 1, delta_t = 1
     # must fineturn the parameters
     df = desire_force(doors, v0, position, v, relaxation_time)
-    sf = social_force(position, particle_radius, A, B)
-    gf = granular_force(position, v, particle_radius, k, kappa)
-    wf = wall_social_force(position, particle_radius, L, A, B)
-    gwf = granular_wall_force(position, v, particle_radius, L, k) # something wack is happening
+    sf = social_force(position, particle_size, A, B)
+    gf = granular_force(position, v, particle_size, k, kappa)
+    wf = wall_social_force(position, particle_size, L, A, B)
+    gwf = granular_wall_force(position, v, particle_size, L, k) # something wack is happening
 
     v = v + (1/m) * (df + sf + gf + wf) * delta_t # + gwf
 
     return v
 
-def update_v(position, v, particle_vision, board_size, particle_radius, delta_t, doors):
+def update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors):
     # m = 1
 
     v_vicsek_model = next_v_vecsek_model(position, v, particle_vision, board_size, delta_t)
-    v_force_model = next_v_force_model(position, v, particle_radius, board_size, particle_size, delta_t, doors)
+    v_force_model = next_v_force_model(position, v, particle_size, board_size, particle_size, delta_t, doors)
 
     v_combined = v0 * (v_vicsek_model + v_force_model) / np.linalg.norm(v_vicsek_model + v_force_model)
 
@@ -359,6 +359,13 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 
     def update_frame(frame):
         nonlocal position, v, scatter, quiver, particle_size
+        if len(position) == 0:
+            ax.set_title(
+            f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
+            f'People remaining: {len(position)}'
+        )
+            return
+
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
         particles_to_remove = index_of_particles_close_to_doors(doors, position, particle_size)
@@ -423,14 +430,14 @@ doors = [door(np.array([board_size/2, 0]), 2, 15, "vertical"),
 run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
-positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+#positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
-if len(positions) != 0:
-    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
-    plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
-    plt.show()
+#if len(positions) != 0:
+#    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
+#    plt.quiver(positions[:, 0], positions[:, 1], v[:, 0], v[:, 1], color='red')
+#    plt.show()
 
-print(len(positions))
+#print(len(positions))
 
 
 
