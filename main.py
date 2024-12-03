@@ -21,7 +21,7 @@
 # ## Priority High
 # - Remove particles when they reach the door - Klar
 # - Global parameters for scalars used in multiple places - Klar
-# - Remove the wall where the door is 
+# - Remove the wall where the door is - klar
 # - Ability to use more doors - Klar
 # - Variable door vision - Klar
 # ## Priority Low
@@ -184,12 +184,38 @@ def wall_social_force(position, particle_size, L, A, B):
     
     f_social_wall = np.zeros((N, 2))
     for i in range(N):
-        distance_to_wall = L/2 - np.abs(position[i])
+        particle_pos = position[i]
+
+        is_near_door = False
+        for door in doors:
+            if door.orientation == "horizontal":
+                left_edge = door.position[0] - door.size / 2
+                right_edge = door.position[0] + door.size / 2
+
+                # If horizontally near a door, skip vertical wall force
+                if left_edge <= particle_pos[0] <= right_edge and abs(particle_pos[1] - door.position[1]) <= particle_size[i]:
+                    is_near_door = True
+                    break
+
+            elif door.orientation == "vertical":
+                bottom_edge = door.position[1] - door.size / 2
+                top_edge = door.position[1] + door.size / 2
+
+                # If vertically near a door, skip horizontal wall force
+                if bottom_edge <= particle_pos[1] <= top_edge and abs(particle_pos[0] - door.position[0]) <= particle_size[i]:
+                    is_near_door = True
+                    break
+
+
+
+
+        if not is_near_door:
+            distance_to_wall = L/2 - np.abs(position[i])
         
-        force_magnitude = A * np.exp((particle_size[i]/2 - distance_to_wall) / B)
-        direction = -np.sign(position[i])
+            force_magnitude = A * np.exp((particle_size[i]/2 - distance_to_wall) / B)
+            direction = -np.sign(position[i])
         
-        f_social_wall[i] = force_magnitude * direction
+            f_social_wall[i] = force_magnitude * direction
 
     return f_social_wall
 
