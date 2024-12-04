@@ -404,7 +404,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
             particle_size = np.delete(particle_size, particles_to_remove)
         # reflecting_boundary_conditions(position, board_size)
 
-        if frame % 1 == 0: # Update plot every 10 frames
+        if frame % 1 == 0: # Update plot every 1 frames
             if frame == 1:
                 #Sometimes the simulation gets stuck in a deadlock.
                 #I think due to the fact that sometimes particles spawn too close together which messes with the forces for some reason
@@ -432,9 +432,9 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
 #n_particles = 100
 #particle_size = 0.4 # [m] average shoulder width of a teenage girl in the range [13-18]
 particle_size = np.random.uniform(0.3,0.45, n_particles)
-board_size = 50  # [m]
+board_size = 100  # [m]
 particle_vision = 3 # [m]
-n_itterations = 1000
+n_itterations = 100000
 delta_t = 0.1
 #eta = 0.1
 #kappa = 2.4e5 # [kg/(ms)]
@@ -446,10 +446,11 @@ delta_t = 0.1
 #v0 
 
 # (door_position, door_width, door_sight, door_orientation)
-doors = [door(np.array([board_size/2, 0]), 2, 15, "vertical"),
-        door(np.array([-board_size/2, 0]), 1, 15, "vertical"),
-        door(np.array([0,board_size/2]), 4, 10, "horizontal")
- ] #Two doors
+doors = [
+    door(np.array([board_size/2, 0]), 2, 15, "vertical"),
+    door(np.array([-board_size/2, 0]), 1, 15, "vertical"),
+    door(np.array([0,board_size/2]), 4, 10, "horizontal")
+    ] #Two doors
 #door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
 
