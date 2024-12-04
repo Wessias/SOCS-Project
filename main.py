@@ -340,7 +340,7 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
 
     for i in range(n_itterations):
         if len(position) <= 2:
-            return position, v, i*delta_t, escape_times
+            return position, v, round(i*delta_t,2), escape_times
 
         if i % 1000 == 0:
             print(f'current itteration: {i}')
@@ -352,11 +352,11 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         if len(particles_to_remove) != 0:
             position = np.delete(position, particles_to_remove, axis=0)
             v = np.delete(v, particles_to_remove, axis=0)
-            escape_times.append(delta_t*i)
+            escape_times.append(round(delta_t*i,2))
         
         # reflecting_boundary_conditions(position, board_size)
 
-    return position, v, i*delta_t, escape_times
+    return position, v, round(i*delta_t,2), escape_times
 
 # %% Simulation animation
 
@@ -461,7 +461,7 @@ doors = [
 # run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
-positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+#positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 #if len(positions) != 0:
 #    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
