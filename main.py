@@ -307,18 +307,25 @@ def init_particles(N, L, v_max=1):
     v = (np.random.rand(N, 2) - 0.5) * v_max
     #position = np.random.uniform(-L/4, L/4, (N, 2))
 
-    
     positions = np.empty((0, 2))  # Initialize an empty array for positions
 
     max_size = max(particle_size)
+    tries = 0
     while positions.shape[0] < N:
         # Generate a candidate position
-        candidate = np.random.uniform(-L / 4, L / 4, (1, 2))  # Shape (1, 2)
+        candidate = np.random.uniform(-L / 3.5, L / 3.5, (1, 2))  # Shape (1, 2)
 
         # Compute distances to all existing positions
         if positions.shape[0] == 0 or np.all(np.linalg.norm(positions - candidate, axis=1) >= max_size + 1):
             positions = np.vstack([positions, candidate])  # Add the candidate if it's valid
-    
+        
+        if tries > 100000:
+            print("Reset positions")
+            print(tries, positions)
+            positions = np.empty((0, 2))
+            tries = 0  
+            print(tries, positions)
+        tries += 1
     
     
     #Just used this cause for a smaller arena it was chaos.
@@ -458,7 +465,7 @@ doors = [
 
 
 # %% Simulation animation, need to run entire script to see animation
-# run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+#run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
 #positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)

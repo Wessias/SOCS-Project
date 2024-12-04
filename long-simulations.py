@@ -97,3 +97,52 @@ time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 print(time_list_varying_sight)
 print(size_list)
 plt.plot(size_list, time_list_varying_sight)
+
+
+# %%
+
+
+def vary_num_particles(size_list, sim_per_size):
+    board_size = 50  # [m]
+    particle_vision = 3 # [m]
+    delta_t = 0.1
+    door_sight = 1000
+    door_width = 1
+    
+   
+    
+    time_list = []
+
+    for num_part in size_list:
+        print("Particle amount: ", num_part)
+        doors = [
+            door(np.array([ -board_size/2, 0]), door_width, door_sight, "vertical")
+        ]
+
+
+        n_particles = num_part
+        for i in range(sim_per_size):
+            particle_size = np.random.uniform(0.3,0.45, n_particles) 
+
+            time_size = 0
+            positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+            time_size += time
+
+        time_list.append(time_size/sim_per_size)
+
+    return time_list
+# %%
+min_size = 10
+max_size = 300
+jump_size = 50
+size_list = np.arange(min_size, max_size, jump_size)
+
+
+sim_per_size = 1
+
+time_list_varying_num_particles = vary_num_particles(size_list, sim_per_size)
+
+# %%
+print(time_list_varying_num_particles)
+print(size_list)
+plt.plot(size_list, time_list_varying_num_particles)
