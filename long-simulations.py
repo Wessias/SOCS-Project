@@ -1,3 +1,13 @@
+# %% [markdown]
+# # Left to do Friday
+# - Stop simulation when less than 2 particles are left
+# - Use one door and adjust width of door (10 simulations per door, large radius)
+# - Use one door and adjust door sight (10 simulations per door, large radius)
+# - Use one door and one size and adjust the number of particles (10 simulations per door, large radius)
+# - Number of doors (on different positions), play around with other things.
+# - Plot the graphs in some nice way
+
+
 # %%
 from main import run_simulation, door
 import numpy as np
