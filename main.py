@@ -334,11 +334,12 @@ def init_particles(N, L, v_max=1):
 
 def run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors):
     # if particles tuch the door, they should be removed
+    escape_times = []
     position, v = init_particles(n_particles, board_size)
 
     for i in range(n_itterations):
         if len(position) <= 2:
-            return position, v, i
+            return position, v, i*delta_t
 
         if i % 1000 == 0:
             print(f'current itteration: {i}')
@@ -350,10 +351,11 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         if len(particles_to_remove) != 0:
             position = np.delete(position, particles_to_remove, axis=0)
             v = np.delete(v, particles_to_remove, axis=0)
+            escape_times.append(delta_t*i)
         
         # reflecting_boundary_conditions(position, board_size)
 
-    return position, v, i
+    return position, v, i*delta_t
 
 # %% Simulation animation
 
@@ -410,12 +412,6 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
         # reflecting_boundary_conditions(position, board_size)
 
         if frame % 1 == 0: # Update plot every 1 frames
-            if frame == 1:
-                #Sometimes the simulation gets stuck in a deadlock.
-                #I think due to the fact that sometimes particles spawn too close together which messes with the forces for some reason
-                #It is mentioned in one of the papers we referenced that they experienced this too and used random radiuses of particles to introduce some randomness which 
-                #makes this less likely to happen.
-                time.sleep(3)
             scatter.remove()
             quiver.remove()
             if len(position) == 0:
