@@ -340,7 +340,7 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
 
     for i in range(n_itterations):
         if len(position) <= 2:
-            return position, v, i*delta_t
+            return position, v, i*delta_t, escape_times
 
         if i % 1000 == 0:
             print(f'current itteration: {i}')
