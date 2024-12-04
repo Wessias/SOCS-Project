@@ -12,6 +12,7 @@
 from main import run_simulation, door
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 n_itterations = 100000
 # %%
@@ -83,8 +84,8 @@ def vary_door_sight(size_list, sim_per_size):
 
 # %%
 
-min_size = 10
-max_size = 35
+min_size = 5
+max_size = 30
 n_sizes = 10
 size_list = np.linspace(min_size, max_size, n_sizes)
 
