@@ -337,8 +337,8 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
     position, v = init_particles(n_particles, board_size)
 
     for i in range(n_itterations):
-        if len(position) == 0:
-            break
+        if len(position) <= 2:
+            return position, v, i
 
         if i % 1000 == 0:
             print(f'current itteration: {i}')
@@ -353,7 +353,7 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         
         # reflecting_boundary_conditions(position, board_size)
 
-    return position, v
+    return position, v, i
 
 # %% Simulation animation
 
