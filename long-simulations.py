@@ -33,9 +33,7 @@ def vary_door_size(size_list, sim_per_size):
 
         for i in range(sim_per_size):
             time_size = 0
-            positions, v, time, _, total_time, escape_times = run_simulation(n_particles, particle_size, 
-                                                        board_size, particle_vision,
-                                                          n_itterations, delta_t, doors)
+            positions, v, time, _ = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
             time_size += time
 
         time_list.append(time_size/sim_per_size)

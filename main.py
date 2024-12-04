@@ -461,7 +461,7 @@ doors = [
 # run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
-positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 #if len(positions) != 0:
 #    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
