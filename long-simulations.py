@@ -22,7 +22,7 @@ def vary_door_size(size_list, sim_per_size):
     particle_vision = 3 # [m]
     vision = 1000
     delta_t = 0.1
-    
+    particle_size = np.random.uniform(0.3,0.45, n_particles)
     time_list = []
 
     for size in size_list:
@@ -31,7 +31,6 @@ def vary_door_size(size_list, sim_per_size):
         ]
 
         for i in range(sim_per_size):
-            particle_size = np.random.uniform(0.3,0.45, n_particles)
             time_size = 0
             positions, v, time, _ = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
             time_size += time
@@ -60,20 +59,20 @@ def vary_door_sight(size_list, sim_per_size):
     board_size = 50  # [m]
     particle_vision = 3 # [m]
     delta_t = 0.1
+    particle_size = np.random.uniform(0.3,0.45, n_particles) #For independent runs probably should just implement this in init func
 
    
     
     time_list = []
 
     for size_radius in size_list:
-        print("Size " + round(size_radius,2))
+        print("Size ", round(size_radius,2))
         doors = [
-            door(np.array([ -board_size/2, 0]), 1.5, size_radius, "vertical")
+            door(np.array([ -board_size/2, 0]), 1, size_radius, "vertical")
         ]
 
 
         for i in range(sim_per_size):
-            particle_size = np.random.uniform(0.3,0.45, n_particles) #For independent runs probably should just implement this in init func
             time_size = 0
             positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
             time_size += time
@@ -85,11 +84,11 @@ def vary_door_sight(size_list, sim_per_size):
 # %%
 
 min_size = 10
-max_size = 50
+max_size = 35
 n_sizes = 10
 size_list = np.linspace(min_size, max_size, n_sizes)
 
-sim_per_size = 2
+sim_per_size = 4
 
 time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 
