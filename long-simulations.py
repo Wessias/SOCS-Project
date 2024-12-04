@@ -23,13 +23,14 @@ def vary_door_size(size_list, sim_per_size):
     particle_vision = 3 # [m]
     vision = 1000
     delta_t = 0.1
+    
+    time_list = []
 
     for size in size_list:
         doors = [
             door(np.array([0, -board_size/2]), size, vision, "horizontal")
         ]
 
-        time_list = []
 
         for i in range(sim_per_size):
             time_size = 0
@@ -49,5 +50,8 @@ size_list = np.linspace(min_size, max_size, n_sizes)
 sim_per_size = 2
 
 time_list = vary_door_size(size_list, sim_per_size)
+
+# %% Plotting
+print(time_list)
 plt.plot(size_list, time_list)
 # %%
