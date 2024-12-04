@@ -25,7 +25,9 @@ doors = [
     door(np.array([0,board_size/2]), 4, 10, "horizontal")
     ]
 
-positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, 
+                                                        board_size, particle_vision,
+                                                          n_itterations, delta_t, doors)
 
 
 
