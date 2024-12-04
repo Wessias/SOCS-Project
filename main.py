@@ -355,7 +355,7 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         
         # reflecting_boundary_conditions(position, board_size)
 
-    return position, v, i*delta_t
+    return position, v, i*delta_t, escape_times
 
 # %% Simulation animation
 
