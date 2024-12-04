@@ -30,8 +30,9 @@
 # - Stop simulation when less than 2 particles are left
 # - Use one door and adjust width of door (10 simulations per door, large radius)
 # - Use one door and adjust door sight (10 simulations per door, large radius)
+# - Use one door and one size and adjust the number of particles (10 simulations per door, large radius)
 # - Number of doors (on different positions), play around with other things.
-
+# - Plot the graphs in some nice way
 
 # Pastear in lite kod snuttar som jag tror kan vara användbara för oss
 # %% Interaction function for Vicsek model
@@ -461,10 +462,10 @@ doors = [
 
 
 # %% Simulation animation, need to run entire script to see animation
-run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+# run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
-#positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+positions, v = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 #if len(positions) != 0:
 #    plt.scatter(positions[:, 0], positions[:, 1], label='Final position')
