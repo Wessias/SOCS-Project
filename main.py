@@ -17,15 +17,20 @@
 # git reset --hard HEAD~
 
 # %% [markdown]
-# # Left to do
+# # Left to do Wednesday
 # ## Priority High
 # - Remove particles when they reach the door - Klar
 # - Global parameters for scalars used in multiple places - Klar
 # - Remove the wall where the door is - klar
 # - Ability to use more doors - Klar
 # - Variable door vision - Klar
-# ## Priority Low
-# - line or similar target (door) to go towards
+# - Randomize particle size - Klar
+
+# # Left to do Friday
+# - Stop simulation when less than 2 particles are left
+# - Use one door and adjust width of door (10 simulations per door, large radius)
+# - Use one door and adjust door sight (10 simulations per door, large radius)
+# - Number of doors (on different positions), play around with other things.
 
 
 # Pastear in lite kod snuttar som jag tror kan vara användbara för oss
