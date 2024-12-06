@@ -425,7 +425,7 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
             if len(position) == 0:
                 return scatter, quiver, *vision_circles
 
-            scatter = ax.scatter(position[:, 0], position[:, 1], color="#e83231", s=particle_size**2*500)
+            scatter = ax.scatter(position[:, 0], position[:, 1], color="#e83231", s=particle_size**3*500)
             quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue', scale=40)
 
             ax.set_title(
