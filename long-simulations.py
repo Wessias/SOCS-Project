@@ -42,12 +42,12 @@ def vary_door_size(size_list, sim_per_size):
     return time_list
 
 # %% Simulation varying door size
-min_size = 0.5
-max_size = 10
-n_sizes = 10
+min_size = 0.375 # 2 * mean of particle width
+max_size = 6
+n_sizes = 30
 size_list = np.linspace(min_size, max_size, n_sizes)
 
-sim_per_size = 4
+sim_per_size = 8
 
 time_list = vary_door_size(size_list, sim_per_size)
 
@@ -183,6 +183,7 @@ print(time_list_varying_num_particles)
 print(size_list)
 plt.plot(size_list, time_list_varying_num_particles)
 plt.xlabel("Number of particles")
+plt.yscale('log')
 plt.ylabel("Time to escape")
 plt.title("Time to escape varying number of particles")
 plt.show()
