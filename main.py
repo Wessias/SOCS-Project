@@ -469,7 +469,7 @@ doors = [
 
 
 # %% Simulation animation, need to run entire script to see animation
-run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+#run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
 #positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
