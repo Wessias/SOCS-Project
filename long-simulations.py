@@ -26,7 +26,8 @@ def vary_door_size(size_list, sim_per_size):
     particle_size = np.random.uniform(0.3,0.45, n_particles)
     time_list = []
 
-    for size in size_list:
+    for index, size in enumerate(size_list):
+        print("Progress: ", index, '/', len(size_list))
         doors = [
             door(np.array([0, -board_size/2]), size, vision, "horizontal")
         ]
@@ -40,19 +41,23 @@ def vary_door_size(size_list, sim_per_size):
 
     return time_list
 
-# %%
-min_size = 4
+# %% Simulation varying door size
+min_size = 0.5
 max_size = 10
-n_sizes = 5
+n_sizes = 10
 size_list = np.linspace(min_size, max_size, n_sizes)
 
-sim_per_size = 2
+sim_per_size = 4
 
 time_list = vary_door_size(size_list, sim_per_size)
 
-# %% Plotting
+# %% Plotting varying door size
 print(time_list)
 plt.plot(size_list, time_list)
+plt.xlabel("Door size")
+plt.ylabel("Time to escape")
+plt.title("Time to escape varying door size")
+plt.show()
 # %%
 
 def vary_door_sight(size_list, sim_per_size):
@@ -97,6 +102,10 @@ time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 print(time_list_varying_sight)
 print(size_list)
 plt.plot(size_list, time_list_varying_sight)
+plt.xlabel("Door sight")
+plt.ylabel("Time to escape")
+plt.title("Time to escape varying door sight")
+plt.show()
 
 
 # %%
@@ -146,3 +155,7 @@ time_list_varying_num_particles = vary_num_particles(size_list, sim_per_size)
 print(time_list_varying_num_particles)
 print(size_list)
 plt.plot(size_list, time_list_varying_num_particles)
+plt.xlabel("Number of particles")
+plt.ylabel("Time to escape")
+plt.title("Time to escape varying number of particles")
+plt.show()
