@@ -51,7 +51,16 @@ sim_per_size = 4
 
 time_list = vary_door_size(size_list, sim_per_size)
 
+# %%
+np.savetxt("varying_door_size.csv", np.array([time_list, size_list]), delimiter=",")
+
 # %% Plotting varying door size
+
+data = np.genfromtxt('varying_door_size.csv', delimiter=',')
+print(data)
+time_list = data[0]
+size_list = data[1]
+
 print(time_list)
 plt.plot(size_list, time_list)
 plt.xlabel("Door size")
@@ -98,7 +107,15 @@ sim_per_size = 4
 
 time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 
+np.savetxt("varying_door_sight.csv", np.array([time_list, size_list]), delimiter=",")
+
 # %%
+data = np.genfromtxt('varying_door_sight.csv', delimiter=',')
+print(data)
+time_list = data[0]
+size_list = data[1]
+
+
 print(time_list_varying_sight)
 print(size_list)
 plt.plot(size_list, time_list_varying_sight)
@@ -151,7 +168,17 @@ sim_per_size = 1
 
 time_list_varying_num_particles = vary_num_particles(size_list, sim_per_size)
 
+np.savetxt("varying_number_of_particles.csv", np.array([time_list, size_list]), delimiter=",")
+
+
 # %%
+
+data = np.genfromtxt('varying_number_of_particles.csv', delimiter=',')
+print(data)
+time_list = data[0]
+size_list = data[1]
+
+
 print(time_list_varying_num_particles)
 print(size_list)
 plt.plot(size_list, time_list_varying_num_particles)
