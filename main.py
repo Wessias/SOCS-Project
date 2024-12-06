@@ -39,6 +39,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from scipy.spatial.distance import cdist
 import time
 
 eta = 0.1
@@ -58,46 +59,53 @@ class door:
         self.size = size
         self.orientation = orientation # "horizontal" or "vertical"
 
-def next_v_vecsek_model(position, v, Rf, L, delta_t):
-    """
-    Function to calculate the orientation at the next time step.
-    
-    Parameters
-    ==========
-    x, y : Positions.
-    theta : Orientations.
-    Rf : Flocking radius.
-    L : Dimension of the squared arena.
-    eta : Noise strength.
-    """
-    
+def next_v_vecsek_model(position, v, Rf, L, delta_t):    
     N = position.shape[0]
     x = position[:, 0]
     y = position[:, 1]
 
     theta_next = np.zeros(N)
 
-    for j in range(N):
-        # No need for replicas in our case
-        dist2 = (x - x[j]) ** 2 + (y - y[j]) ** 2 
-        nn = np.where(dist2 <= Rf ** 2)[0]
-        
-        # The list of nearest neighbours is set.
-        nn = nn.astype(int)
-        theta = np.arctan2(v[nn, 1], v[nn, 0])
-        
-        # Circular average.
-        av_sin_theta = np.mean(np.sin(theta))
-        av_cos_theta = np.mean(np.cos(theta))
+    dist2 = cdist(position, position, 'sqeuclidean')
+    neighbor_mask = dist2 <= Rf ** 2
 
-        theta_avg = np.arctan2(av_sin_theta, av_cos_theta)
-        theta_delta = eta * np.random.normal(0, 1) * delta_t
-        speed = np.sqrt(v[j, 0] ** 2 + v[j, 1] ** 2)
+    theta = np.arctan2(v[:, 1], v[:, 0])
 
-        theta_next[j] = theta_avg + theta_delta
+    sin_theta = np.sin(theta)
+    cos_theta = np.cos(theta)
+
+    av_sin_theta = neighbor_mask @ sin_theta / neighbor_mask.sum(axis=1)
+    av_cos_theta = neighbor_mask @ cos_theta / neighbor_mask.sum(axis=1)
+
+    theta_avg = np.arctan2(av_sin_theta, av_cos_theta)
+    theta_delta = eta * np.random.normal(0, 1, N) * delta_t
+    
+    theta_next = theta_avg + theta_delta
 
     v[:, 0] = v0 * np.cos(theta_next)
     v[:, 1] = v0 * np.sin(theta_next)
+
+    # for j in range(N):
+    #     # No need for replicas in our case
+    #     dist2 = (x - x[j]) ** 2 + (y - y[j]) ** 2 
+    #     nn = np.where(dist2 <= Rf ** 2)[0]
+        
+    #     # The list of nearest neighbours is set.
+    #     nn = nn.astype(int)
+    #     theta = np.arctan2(v[nn, 1], v[nn, 0])
+        
+    #     # Circular average.
+    #     av_sin_theta = np.mean(np.sin(theta))
+    #     av_cos_theta = np.mean(np.cos(theta))
+
+    #     theta_avg = np.arctan2(av_sin_theta, av_cos_theta)
+    #     theta_delta = eta * np.random.normal(0, 1) * delta_t
+    #     speed = np.sqrt(v[j, 0] ** 2 + v[j, 1] ** 2)
+
+    #     theta_next[j] = theta_avg + theta_delta
+
+    # v[:, 0] = v0 * np.cos(theta_next)
+    # v[:, 1] = v0 * np.sin(theta_next)
           
     return v
 
@@ -111,8 +119,6 @@ def reflecting_boundary_conditions(positions, L):
 
 
 def desire_force(doors, speed_desire, position, v, relaxation_time):
-    
-    
     # add posibility to go toward a line (2, 2) array, use the shortest distance
 
     N = position.shape[0]
@@ -157,9 +163,9 @@ def social_force(position, particle_size, A, B):
         nn_forces = (force_size[:, None] * force_direction)
 
         f_social[i] = np.sum(nn_forces, axis=0)
-        
+    
     return f_social
-
+        
 def granular_force(position, v, particle_size, k, kappa):
     N = position.shape[0]
 
@@ -349,8 +355,6 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
         if len(position) <= 2:
             return position, v, round(i*delta_t,2), escape_times
 
-        if i % 1000 == 0:
-            print(f'current itteration: {i}')
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
         
@@ -465,7 +469,7 @@ doors = [
 
 
 # %% Simulation animation, need to run entire script to see animation
-#run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
 #positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
