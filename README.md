@@ -1,7 +1,7 @@
 ### FIN KOD KOMMER DYKA UPP HÄR SNART 🔥
 
 ### Plots
-## Can easily change how they look this is just a start
+# Can easily change how they look just made something to begin with
 
 <div style="display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
   <img src="plot_num_part.png " alt="Plot Door Sight" width="45%">
