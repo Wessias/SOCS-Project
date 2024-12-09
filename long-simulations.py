@@ -53,26 +53,32 @@ def vary_door_size(size_list, sim_per_size):
 
 # %% Simulation varying door size
 min_size = 0.375 # 2 * mean of particle width
-max_size = 6
-n_sizes = 30
-size_list = np.linspace(min_size, max_size, n_sizes)
+middle_size = 4
+max_size = 10
+#n_sizes = 30
+#size_list = np.linspace(min_size, max_size, n_sizes)
+t_steps_dense = np.linspace(min_size, middle_size, 25)
+t_steps_spare = np.linspace(middle_size,max_size, 20)
+size_list = np.concatenate([t_steps_dense,t_steps_spare])
 
 sim_per_size = 8
 
 time_list, full_time_list = vary_door_size(size_list, sim_per_size)
 
 # %%
-print(time_list)
-np.savetxt("varying_door_size_2.csv", np.array([time_list, size_list]), delimiter=",")
+np.savetxt("varying_door_size_dense_start.csv", np.array([time_list, size_list]), delimiter=",")
 
 # %% Plotting varying door size
 
-data = np.genfromtxt('varying_door_size_2.csv', delimiter=',')
+data = np.genfromtxt('varying_door_size_dense_start.csv', delimiter=',')
 print(data)
 time_list = data[0]
 size_list = data[1]
 
 print(time_list)
+plt.plot(size_list, time_list, "x")
+plt.xlabel("Door size [m]")
+plt.ylabel("Time to escape [s]")
 plt.scatter(full_time_list[:,0], full_time_list[:,1])
 plt.plot(size_list, time_list)
 plt.xlabel("Door size")
@@ -132,9 +138,9 @@ time_list = data[0]
 size_list = data[1]
 
 
-print(time_list_varying_sight)
+print(time_list)
 print(size_list)
-plt.plot(size_list, time_list_varying_sight)
+plt.plot(size_list, time_list, "-o", color="orange")
 plt.xlabel("Door sight")
 plt.ylabel("Time to escape")
 plt.title("Time to escape varying door sight")
@@ -162,9 +168,10 @@ def vary_num_particles(size_list, sim_per_size):
         ]
 
 
+        particle_size = np.random.uniform(0.3,0.45, num_part) 
         n_particles = num_part
         for i in range(sim_per_size):
-            particle_size = np.random.uniform(0.3,0.45, n_particles) 
+            print("Run ", i)
 
             time_size = 0
             positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
@@ -175,16 +182,17 @@ def vary_num_particles(size_list, sim_per_size):
     return time_list
 # %%
 min_size = 10
-max_size = 300
-jump_size = 50
+max_size = 400
+jump_size = 25
 size_list = np.arange(min_size, max_size, jump_size)
 
 
-sim_per_size = 1
+sim_per_size = 8
 
 time_list_varying_num_particles = vary_num_particles(size_list, sim_per_size)
+# %%
 
-np.savetxt("varying_number_of_particles.csv", np.array([time_list, size_list]), delimiter=",")
+np.savetxt("varying_number_of_particles.csv", np.array([time_list_varying_num_particles, size_list]), delimiter=",")
 
 
 # %%
@@ -195,11 +203,31 @@ time_list = data[0]
 size_list = data[1]
 
 
-print(time_list_varying_num_particles)
+print(time_list)
 print(size_list)
-plt.plot(size_list, time_list_varying_num_particles)
+plt.plot(size_list, time_list, "-o", color="orange")
 plt.xlabel("Number of particles")
-plt.yscale('log')
 plt.ylabel("Time to escape")
 plt.title("Time to escape varying number of particles")
+plt.show()
+
+# %%
+from scipy.optimize import curve_fit
+# Quadratic fit function
+def quadratic_fit(x, a, b, c):
+    return a * x**2 + b * x + c
+
+params_quadratic, _ = curve_fit(quadratic_fit, size_list, time_list)
+a_quadratic, b_quadratic, c_quadratic = params_quadratic
+
+# Generate x values for plotting the fit
+x_fit = np.linspace(min(size_list), max(size_list), 500)
+y_quadratic_plot = quadratic_fit(x_fit, a_quadratic, b_quadratic, c_quadratic)
+
+plt.scatter(size_list, time_list, marker="x", label='Simulated Escape Times')
+plt.plot(x_fit, y_quadratic_plot, label='Quadratic Fit', color='orange', linestyle='--')
+plt.xlabel("Number of particles")
+plt.ylabel("Time to escape")
+plt.title("Time to escape varying number of particles")
+plt.legend()
 plt.show()

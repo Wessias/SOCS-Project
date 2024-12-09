@@ -322,17 +322,14 @@ def init_particles(N, L, v_max=1):
         candidate = np.random.uniform(-L / 3.5, L / 3.5, (1, 2))  # Shape (1, 2)
 
         # Compute distances to all existing positions
-        if positions.shape[0] == 0 or np.all(np.linalg.norm(positions - candidate, axis=1) >= max_size + 1):
+        if positions.shape[0] == 0 or np.all(np.linalg.norm(positions - candidate, axis=1) >= max_size + 0.5):
             positions = np.vstack([positions, candidate])  # Add the candidate if it's valid
         
-        if tries > 100000:
+        if tries > 10000000:
             print("Reset positions")
-            print(tries, positions)
             positions = np.empty((0, 2))
             tries = 0  
-            print(tries, positions)
         tries += 1
-    
     
     #Just used this cause for a smaller arena it was chaos.
     #x = np.linspace(-L/5, L/5, int(np.sqrt(N)))
