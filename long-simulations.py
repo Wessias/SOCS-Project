@@ -52,38 +52,55 @@ def vary_door_size(size_list, sim_per_size):
     return time_list, full_time_list
 
 # %% Simulation varying door size
-min_size = 0.375 # 2 * mean of particle width
+min_size = 0.375 / 2 # mean of particle width
 middle_size = 4
-max_size = 10
+max_size = 8
 #n_sizes = 30
 #size_list = np.linspace(min_size, max_size, n_sizes)
-t_steps_dense = np.linspace(min_size, middle_size, 25)
+t_steps_dense = np.linspace(min_size, middle_size, 40)
 t_steps_spare = np.linspace(middle_size,max_size, 20)
 size_list = np.concatenate([t_steps_dense,t_steps_spare])
 
-sim_per_size = 8
+sim_per_size = 12
 
 time_list, full_time_list = vary_door_size(size_list, sim_per_size)
 
 # %%
-np.savetxt("varying_door_size_dense_start.csv", np.array([time_list, size_list]), delimiter=",")
+np.savetxt("varying_door_size_long_run.csv", np.array([time_list, size_list]), delimiter=",")
+np.savetxt("varying_door_size_long_run_full.csv", full_time_list, delimiter=",")
 
 # %% Plotting varying door size
 
-data = np.genfromtxt('varying_door_size_dense_start.csv', delimiter=',')
-print(data)
+data = np.genfromtxt('varying_door_size_long_run.csv', delimiter=',')
+full_data = np.genfromtxt('varying_door_size_long_run_full.csv', delimiter=',')
+
 time_list = data[0]
 size_list = data[1]
 
-print(time_list)
-plt.plot(size_list, time_list, "x")
+# fit a 1/x curve to the full_data
+def inverse(x, a, b):
+    return a/x + b
+
+params, _ = curve_fit(inverse, full_data[:,0], full_data[:,1])
+a, b = params
+
+x_fit = np.linspace(min(full_data[:,0]), max(full_data[:,0]), 500)
+y_fit = inverse(x_fit, a, b)
+plt.plot(x_fit, y_fit, label='Fited escape', color='black', linestyle='--')
+
+# calculate the variance of full_data for each door size
+variance = []
+for size in size_list:
+    variance.append(np.var(full_data[full_data[:,0] == size, 1]))
+
+plt.plot(full_time_list[:,0], full_time_list[:,1], 'x', label='Simulated Escape Times', markersize=2)
+plt.plot(size_list, time_list, "o", color="black", label="Mean escape time", markersize=5)
 plt.xlabel("Door size [m]")
 plt.ylabel("Time to escape [s]")
-plt.scatter(full_time_list[:,0], full_time_list[:,1])
-plt.plot(size_list, time_list)
 plt.xlabel("Door size")
 plt.ylabel("Time to escape")
 plt.title("Time to escape varying door size")
+plt.legend()
 plt.show()
 # %%
 
@@ -131,7 +148,7 @@ time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 
 np.savetxt("varying_door_sight.csv", np.array([time_list, size_list]), delimiter=",")
 
-# %%
+# %% Plot varying door sight
 data = np.genfromtxt('varying_door_sight.csv', delimiter=',')
 print(data)
 time_list = data[0]
@@ -231,3 +248,4 @@ plt.ylabel("Time to escape")
 plt.title("Time to escape varying number of particles")
 plt.legend()
 plt.show()
+# %%
