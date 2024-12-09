@@ -25,6 +25,7 @@ def vary_door_size(size_list, sim_per_size):
     delta_t = 0.1
     particle_size = np.random.uniform(0.3,0.45, n_particles)
     time_list = []
+    full_time_list = np.zeros((len(size_list)*sim_per_size, 2))
 
     for index, size in enumerate(size_list):
         print("Progress: ", index, '/', len(size_list))
@@ -33,13 +34,22 @@ def vary_door_size(size_list, sim_per_size):
         ]
 
         for i in range(sim_per_size):
-            time_size = 0
+            time_size = []
             positions, v, time, _ = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
-            time_size += time
+            time_size.append(time)
+            full_time_list[index*sim_per_size + i, 0] = size
+            full_time_list[index*sim_per_size + i, 1] = time
 
-        time_list.append(time_size/sim_per_size)
 
-    return time_list
+        if len(time_size) > 2:
+            time_size = np.array(time_size)
+            time_size = time_size[time_size != np.max(time_size)]
+            time_size = time_size[time_size != np.min(time_size)]
+            time_list.append(np.mean(time_size))
+        else:
+            time_list.append(np.mean(time_size[0]))
+
+    return time_list, full_time_list
 
 # %% Simulation varying door size
 min_size = 0.375 # 2 * mean of particle width
@@ -49,19 +59,21 @@ size_list = np.linspace(min_size, max_size, n_sizes)
 
 sim_per_size = 8
 
-time_list = vary_door_size(size_list, sim_per_size)
+time_list, full_time_list = vary_door_size(size_list, sim_per_size)
 
 # %%
-np.savetxt("varying_door_size.csv", np.array([time_list, size_list]), delimiter=",")
+print(time_list)
+np.savetxt("varying_door_size_2.csv", np.array([time_list, size_list]), delimiter=",")
 
 # %% Plotting varying door size
 
-data = np.genfromtxt('varying_door_size.csv', delimiter=',')
+data = np.genfromtxt('varying_door_size_2.csv', delimiter=',')
 print(data)
 time_list = data[0]
 size_list = data[1]
 
 print(time_list)
+plt.scatter(full_time_list[:,0], full_time_list[:,1])
 plt.plot(size_list, time_list)
 plt.xlabel("Door size")
 plt.ylabel("Time to escape")
@@ -88,11 +100,15 @@ def vary_door_sight(size_list, sim_per_size):
 
 
         for i in range(sim_per_size):
-            time_size = 0
+            time_size = []
             positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
-            time_size += time
+            time_size.append(time)
 
-        time_list.append(time_size/sim_per_size)
+        time_size = np.array(time_size)
+        time_size = time_size[time_size != np.max(time_size)]
+        time_size = time_size[time_size != np.min(time_size)]
+
+        time_list.append(np.mean(time_size))
 
     return time_list
 
