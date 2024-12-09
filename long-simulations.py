@@ -13,6 +13,7 @@ from main import run_simulation, door
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.optimize import curve_fit
 
 n_itterations = 100000
 # %%
@@ -78,28 +79,32 @@ time_list = data[0]
 size_list = data[1]
 
 # fit a 1/x curve to the full_data
-def inverse(x, a, b):
-    return a/x + b
-
+def inverse(x, a, b, c):
+    #return a*np.exp(-x) + c 
+    return a/(x+b) + c
 params, _ = curve_fit(inverse, full_data[:,0], full_data[:,1])
-a, b = params
+a, b, c = params
 
 x_fit = np.linspace(min(full_data[:,0]), max(full_data[:,0]), 500)
-y_fit = inverse(x_fit, a, b)
-plt.plot(x_fit, y_fit, label='Fited escape', color='black', linestyle='--')
+y_fit = inverse(x_fit, a, b, c)
+
+fig = plt.figure(facecolor="#c2cfb2")
+ax = plt.axes()
+ax.set_facecolor("#c2cfb2")
+plt.plot(x_fit, y_fit, label='Fited escape', color='darkgreen', linestyle='--')
 
 # calculate the variance of full_data for each door size
 variance = []
 for size in size_list:
     variance.append(np.var(full_data[full_data[:,0] == size, 1]))
 
-plt.plot(full_time_list[:,0], full_time_list[:,1], 'x', label='Simulated Escape Times', markersize=2)
-plt.plot(size_list, time_list, "o", color="black", label="Mean escape time", markersize=5)
+plt.plot(full_data[:,0], full_data[:,1], 'x', label='Simulated Escape Times', markersize=2, alpha=1, color="#59a5d8")
+#plt.plot(size_list, time_list, "x", color="orange", label="Mean escape time", markersize=8)
 plt.xlabel("Door size [m]")
 plt.ylabel("Time to escape [s]")
 plt.xlabel("Door size")
 plt.ylabel("Time to escape")
-plt.title("Time to escape varying door size")
+plt.title("Time to escape when varying door size")
 plt.legend()
 plt.show()
 # %%
