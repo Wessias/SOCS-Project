@@ -172,13 +172,14 @@ def vary_num_particles(size_list, sim_per_size):
     particle_vision = 3 # [m]
     delta_t = 0.1
     door_sight = 1000
-    door_width = 1
+    door_width = 2
     
    
     
     time_list = []
+    total_list = np.zeros((len(size_list)*sim_per_size, 2))
 
-    for num_part in size_list:
+    for index, num_part in enumerate(size_list):
         print("Particle amount: ", num_part)
         doors = [
             door(np.array([ -board_size/2, 0]), door_width, door_sight, "vertical")
@@ -188,40 +189,60 @@ def vary_num_particles(size_list, sim_per_size):
         particle_size = np.random.uniform(0.3,0.45, num_part) 
         n_particles = num_part
         for i in range(sim_per_size):
-            print("Run ", i)
-
             time_size = 0
             positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
             time_size += time
+            total_list[index*sim_per_size + i, 0] = num_part
+            total_list[index*sim_per_size + i, 1] = time_size
 
         time_list.append(time_size/sim_per_size)
 
-    return time_list
+    return time_list, total_list
 # %%
 min_size = 10
 max_size = 400
-jump_size = 25
+jump_size = 10
 size_list = np.arange(min_size, max_size, jump_size)
 
 
-sim_per_size = 8
+sim_per_size = 20
 
-time_list_varying_num_particles = vary_num_particles(size_list, sim_per_size)
+time_list_varying_num_particles, num_part_tot = vary_num_particles(size_list, sim_per_size)
 # %%
 
-np.savetxt("varying_number_of_particles.csv", np.array([time_list_varying_num_particles, size_list]), delimiter=",")
+np.savetxt("varying_number_of_particles_mean_400.csv", np.array([time_list_varying_num_particles, size_list]), delimiter=",")
+np.savetxt("varying_number_of_particles_full_400.csv", np.array(num_part_tot), delimiter=",")
 
 
 # %%
 
-data = np.genfromtxt('varying_number_of_particles.csv', delimiter=',')
-print(data)
+data = np.genfromtxt('varying_number_of_particles_mean_400.csv', delimiter=',')
+full_data = np.genfromtxt('varying_number_of_particles_full_400.csv', delimiter=',')
+
 time_list = data[0]
 size_list = data[1]
 
+# take full data and take the average for every different number of particlews
+full_data = np.array(full_data)
+full_data = full_data[full_data[:,0].argsort()]
+full_data = full_data[full_data[:,0] != 0]
+full_data = full_data[full_data[:,1] != 0]
 
-print(time_list)
-print(size_list)
+time_list = []
+for size in size_list:
+    time_list.append(np.mean(full_data[full_data[:,0] == size, 1]))
+
+# calculate the variance and make error bars
+variance = []
+for size in size_list:
+    variance.append(np.var(full_data[full_data[:,0] == size, 1]))
+
+print(variance)
+
+plt.plot(size_list, time_list, "-o", color="orange")
+
+plt.plot(full_data[:,0], full_data[:,1], 'x', label='Simulated Escape Times', markersize=2)
+
 plt.plot(size_list, time_list, "-o", color="orange")
 plt.xlabel("Number of particles")
 plt.ylabel("Time to escape")

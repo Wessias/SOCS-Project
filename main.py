@@ -439,10 +439,10 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
     plt.show()
 # %% Simulation parameters, values from paper we used
 # The variables that are comments I have put as global up top for now.
-#n_particles = 100
+n_particles = 200
 #particle_size = 0.4 # [m] average shoulder width of a teenage girl in the range [13-18]
 particle_size = np.random.uniform(0.3,0.45, n_particles)
-board_size = 100  # [m]
+board_size = 50  # [m]
 particle_vision = 3 # [m]
 n_itterations = 100000
 delta_t = 0.1
@@ -457,16 +457,14 @@ delta_t = 0.1
 
 # (door_position, door_width, door_sight, door_orientation)
 doors = [
-    door(np.array([board_size/2, 0]), 2, 15, "vertical"),
-    door(np.array([-board_size/2, 0]), 1, 15, "vertical"),
-    door(np.array([0,board_size/2]), 4, 10, "horizontal")
+    door(np.array([ -board_size/2, 0]), 2, 1000, "vertical")
     ] #Two doors
 #door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
 
 
 # %% Simulation animation, need to run entire script to see animation
-#run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
+run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
 
 # %% Simulation plot
 #positions, v, total_time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
