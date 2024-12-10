@@ -115,54 +115,73 @@ def vary_door_sight(size_list, sim_per_size):
     particle_vision = 3 # [m]
     delta_t = 0.1
     particle_size = np.random.uniform(0.3,0.45, n_particles) #For independent runs probably should just implement this in init func
-
-   
     
     time_list = []
+    total_list = np.zeros((len(size_list)*sim_per_size, 2))
 
-    for size_radius in size_list:
-        print("Size ", round(size_radius,2))
+
+    for index, size_radius in enumerate(size_list):
+        print("Progress: ", index, '/', len(size_list))
         doors = [
             door(np.array([ -board_size/2, 0]), 1, size_radius, "vertical")
         ]
 
 
+        time_size = []
         for i in range(sim_per_size):
-            time_size = []
+            print("Progress: ", i, '/', sim_per_size)
             positions, v, time, escape_times = run_simulation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors)
             time_size.append(time)
+            total_list[index*sim_per_size + i, 0] = size_radius
+            total_list[index*sim_per_size + i, 1] = time
 
         time_size = np.array(time_size)
-        time_size = time_size[time_size != np.max(time_size)]
-        time_size = time_size[time_size != np.min(time_size)]
 
         time_list.append(np.mean(time_size))
 
-    return time_list
+    return time_list, total_list
 
 # %%
 
 min_size = 5
-max_size = 30
-n_sizes = 10
+max_size = 50
+n_sizes = 80
 size_list = np.linspace(min_size, max_size, n_sizes)
 
-sim_per_size = 4
+sim_per_size = 20
+time_list_varying_sight, total_sight_list = vary_door_sight(size_list, sim_per_size)
 
-time_list_varying_sight = vary_door_sight(size_list, sim_per_size)
 
-np.savetxt("varying_door_sight.csv", np.array([time_list, size_list]), delimiter=",")
+# %%
+print(total_sight_list)
+np.savetxt("varying_door_sight_mean.csv", np.array([time_list, size_list]), delimiter=",")
+np.savetxt("varying_door_sight_full_2.csv", total_sight_list, delimiter=",")
 
 # %% Plot varying door sight
-data = np.genfromtxt('varying_door_sight.csv', delimiter=',')
-print(data)
+# data = np.genfromtxt('varying_door_sight.csv', delimiter=',')
+full_data = np.genfromtxt('varying_door_sight_full.csv', delimiter=',')
+
 time_list = data[0]
 size_list = data[1]
 
+# fit e^-x fkn to the full_data
+def inverse(x, a, b, c):
+    # return a*np.exp(-x) + c 
+    return a/(x+b) + c
 
-print(time_list)
-print(size_list)
-plt.plot(size_list, time_list, "-o", color="orange")
+params, _ = curve_fit(inverse, full_data[:,0], full_data[:,1])
+a, b, c = params
+
+x_fit = np.linspace(min(full_data[:,0]), max(full_data[:,0]), 500)
+y_fit = inverse(x_fit, a, b, c)
+
+fig = plt.figure(facecolor="#c2cfb2")
+ax = plt.axes()
+ax.set_facecolor("#c2cfb2")
+plt.plot(x_fit, y_fit, label='Fited escape', color='darkgreen', linestyle='--')
+
+plt.plot(full_data[:,0], full_data[:,1], 'x', label='Simulated Escape Times', markersize=2)
+# plt.plot(size_list, time_list, "-o", color="orange")
 plt.xlabel("Door sight")
 plt.ylabel("Time to escape")
 plt.title("Time to escape varying door sight")

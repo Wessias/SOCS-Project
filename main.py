@@ -457,7 +457,7 @@ delta_t = 0.1
 
 # (door_position, door_width, door_sight, door_orientation)
 doors = [
-    door(np.array([ -board_size/2, 0]), 2, 1000, "vertical")
+    door(np.array([ -board_size/2, 0]), 2, 20, "vertical")
     ] #Two doors
 #door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
