@@ -42,6 +42,13 @@ import matplotlib.animation as animation
 from scipy.spatial.distance import cdist
 import time
 
+wall_color = '#197598'
+door_color = '#9AC27E'
+particle_color = '#354926'
+arrow_color = '#9AC27E'
+face_color = '#C1CEB2'
+sight_color = '#197598'
+
 eta = 0.1
 kappa = 2.4e5 # [kg/(ms)]
 n_particles = 100
@@ -188,7 +195,7 @@ def granular_force(position, v, particle_size, k, kappa):
 
         f_granular[i] = np.sum(nn_forces, axis=0)
 
-    return f_granular
+    return -f_granular
 
 def wall_social_force(position, particle_size, L, A, B):
     # if the door is on the border, the wall force shouldn't exist
@@ -369,47 +376,58 @@ def run_simulation(n_particles, particle_size, board_size, particle_vision, n_it
 # %% Simulation animation
 
 def run_simulation_animation(n_particles, particle_size, board_size, particle_vision, n_itterations, delta_t, doors):
+    
     position, v = init_particles(n_particles, board_size)
+    elapsed_time = 0
+
+    def reset_simulation():
+        nonlocal position, v, particle_size, elapsed_time
+        position, v = init_particles(n_particles, board_size)
+        particle_size = np.random.uniform(0.3, 0.45, n_particles)
+        elapsed_time = 0  # Reset elapsed time
+
+    reset_simulation()
 
     fig, ax = plt.subplots()
     scatter = ax.scatter(position[:, 0], position[:, 1], s=particle_size*100)
-    quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue')
+    quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color=arrow_color)
     ax.set_xlim(-board_size/2-0.1, board_size/2+0.1)
     ax.set_ylim(-board_size/2-0.1, board_size/2+0.15)
-    fig.set_facecolor("#2B2E35")
+    fig.set_facecolor(face_color)
     ax.axis("off")
     #ax.set_xlabel('x')
     #ax.set_ylabel('y')
     ax.set_title('Particle simulation')
-    ax.legend()
     plt.plot([-board_size/2, -board_size/2, board_size/2, board_size/2, -board_size/2],
      [-board_size/2, board_size/2, board_size/2, -board_size/2, -board_size/2], 
-     color='#f8e1c2', label='Wall')
+     color=wall_color, label='Wall')
     
     for door in doors:
         if door.orientation == "vertical":
-            plt.plot([door.position[0],door.position[0], door.position[0] ], [door.position[1], door.position[1]+door.size, door.position[1]-door.size], color="black")
+            plt.plot([door.position[0],door.position[0], door.position[0] ], [door.position[1], door.position[1]+door.size, door.position[1]-door.size], color=door_color)
         else:
-            plt.plot([door.position[0],door.position[0]+door.size, door.position[0]-door.size ], [door.position[1], door.position[1], door.position[1]], color="black")
+            plt.plot([door.position[0],door.position[0]+door.size, door.position[0]-door.size ], [door.position[1], door.position[1], door.position[1]], color=door_color)
 
 
      # Draw vision circles for the doors
     vision_circles = []
     for door in doors:
-        circle = plt.Circle(door.position, door.vision, color='pink', linestyle='dotted', fill=False, linewidth=1.5)
+        circle = plt.Circle(door.position, door.vision, color=sight_color, linestyle='dotted', fill=False, linewidth=1.5)
         ax.add_artist(circle)
         vision_circles.append(circle)
 
+    elapsed_time = -2*delta_t  # Track elapsed time
 
     def update_frame(frame):
-        nonlocal position, v, scatter, quiver, particle_size
+        nonlocal position, v, scatter, quiver, particle_size, elapsed_time
         if len(position) == 0:
-            ax.set_title(
-            f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
-            f'People remaining: {len(position)}', color="white"
-        )
+            # ax.set_title(
+            # f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
+            # f'People remaining: {len(position)}', color="white")
             return
 
+        
+        elapsed_time += delta_t  # Update elapsed time
         v = update_v(position, v, particle_vision, board_size, particle_size, delta_t, doors)
         position = position + v * delta_t
         particles_to_remove = index_of_particles_close_to_doors(doors, position, particle_size)
@@ -419,23 +437,33 @@ def run_simulation_animation(n_particles, particle_size, board_size, particle_vi
             v = np.delete(v, particles_to_remove, axis=0)
             particle_size = np.delete(particle_size, particles_to_remove)
         # reflecting_boundary_conditions(position, board_size)
+        if frame == 2:
+            #Break between runs
+            time.sleep(4)
 
         if frame % 1 == 0: # Update plot every 1 frames
             scatter.remove()
             quiver.remove()
             if len(position) == 0:
-                return scatter, quiver, *vision_circles
+                frame = 1
+                reset_simulation()
 
-            scatter = ax.scatter(position[:, 0], position[:, 1], color="#e83231", s=particle_size**3*500)
-            quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color='blue', scale=40)
+            scatter = ax.scatter(position[:, 0], position[:, 1], color=particle_color, s=particle_size**3*500)
+            quiver = ax.quiver(position[:, 0], position[:, 1], v[:, 0], v[:, 1], color=arrow_color, scale=40)
 
             ax.set_title(
-            f'Evacuation simulation, frame: {frame} ({frame * delta_t:.2f} s)\n'
-            f'People remaining: {len(position)}', color = "white"
-        )
+             f'Evacuation simulation\n'
+             f'People remaining: {len(position)}, Time Passed: {elapsed_time:.2f} s '
+         )
         return scatter, quiver, *vision_circles
 
-    ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations, interval=1, blit=False)
+    def on_key(event):
+        if event.key == 'r':  # Reset animation on 'r' key press
+            reset_simulation()
+
+    
+    ani = animation.FuncAnimation(fig, update_frame, frames=n_itterations*2**52, interval=1, blit=False)
+    fig.canvas.mpl_connect('key_press_event', on_key)  # Connect key press event
     plt.show()
 # %% Simulation parameters, values from paper we used
 # The variables that are comments I have put as global up top for now.
@@ -457,7 +485,8 @@ delta_t = 0.1
 
 # (door_position, door_width, door_sight, door_orientation)
 doors = [
-    door(np.array([ -board_size/2, 0]), 2, 20, "vertical")
+    door(np.array([ -board_size/2, 0]), 1, 20, "vertical"),
+    door(np.array([ 20, -board_size/2]), 3, 20, "horizontal")
     ] #Two doors
 #door_possition = np.array([[-particle_size, particle_size], [-board_size/2, -board_size/2]])
 
