@@ -1,4 +1,3 @@
-### FIN KOD KOMMER DYKA UPP HÄR SNART 🔥
-
-### Plots
-#### Can easily change how they look just made something to begin with
+### Project in Simulations of Complex Systems
+## Evacuation Dyanmics
+![Simulation GIF](simulation_run.gif)
