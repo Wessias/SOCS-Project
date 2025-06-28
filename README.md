@@ -6,7 +6,7 @@ This project models the dynamics of pedestrian evacuation using a hybrid approac
 
 ## Project Description
 
-The simulation captures realistic behaviors of individuals in a crowded environment—such as a concert venue or sports arena—as they attempt to exit through one or more doors. It investigates how evacuation time and crowd flow are influenced by:
+The simulation captures realistic behaviors of individuals in a crowded environment, such as a concert venue or sports arena, as they attempt to exit through one or more doors. It investigates how evacuation time and crowd flow are influenced by:
 
 - **Door size and positioning**
 - **Visibility (line-of-sight to exits)**
@@ -25,12 +25,12 @@ Each agent is affected by both social forces (e.g., avoiding collisions and wall
 ## Insights Gained
 
 - Increasing door width improves evacuation only up to a certain threshold.
-- Partial visibility (some agents seeing the exit) leads to nearly optimal evacuation—full visibility isn't required.
+- Partial visibility (some agents seeing the exit) leads to nearly optimal evacuation.
 - Dense crowds increase evacuation times and unpredictability, emphasizing the importance of design and planning in real-world venues.
 
 ## Why This Project Matters
 
-This project demonstrates how agent-based simulations can inform safer architectural designs and emergency response strategies. It’s an integration of modeling, simulation, and visualization—illustrating how complex systems can be better understood through computation.
+This project demonstrates how agent-based simulations can inform safer architectural designs and emergency response strategies. It’s an integration of modeling, simulation, and visualization — illustrating how complex systems can be better understood through computation.
 
 ## Technologies Used
 
